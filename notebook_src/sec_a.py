@@ -117,6 +117,12 @@ torch.set_default_dtype(DTYPE)
 if DEVICE.type == "cpu":
     torch.set_num_threads(os.cpu_count() or 4)
 torch.use_deterministic_algorithms(False)   # 4th-order autograd has no det. kernels
+# Causal weights exp(-eps*cum) can enter the float32 SUBNORMAL range, and
+# denormal arithmetic costs ~9.5x on this CPU (measured: 12.20 ms vs 1.29 ms per
+# multiply-reduce), which showed up as a 9x training slowdown at small w_min.
+# Flushing denormals to zero removes that penalty; the values involved are
+# numerically negligible, so accuracy is unaffected. See REPORT.md section 5.7.
+torch.set_flush_denormal(True)
 
 MODE_NAME = "FAST" if FAST_MODE else ("REPRODUCTION" if REPRODUCTION_MODE else "DEFAULT")
 

@@ -8,30 +8,37 @@ Replication study and controlled optimization experiment for:
 > **Engineering Applications of Artificial Intelligence 141 (2025) 109804**.
 > DOI: [10.1016/j.engappai.2024.109804](https://doi.org/10.1016/j.engappai.2024.109804)
 
-The single deliverable is **`beam_pinn_research.ipynb`**. It runs top to bottom
-with no manual edits and regenerates every figure, table, metric and checkpoint
-under `results/`.
+**Start here:**
+
+| Document | What it is |
+|---|---|
+| **[REPORT.md](REPORT.md)** | Full write-up: maths, paper parameters, all results, conclusions, limitations |
+| **[HOW_TO_RUN.md](HOW_TO_RUN.md)** | Install, budgets, caching, outputs, known issues |
+| `beam_pinn_research.ipynb` | The notebook itself — runs top to bottom, no manual edits |
+| `results/` | 15 figures, 14 tables, metrics, per-run logs (22 trained models) |
+
+> **Run status:** the experiment run was stopped early by request. 22 of ~30
+> models completed; the reproduction comparison, paper-window replication and
+> the 2x2 ablation are all complete. REPORT.md section 8 lists exactly what is
+> missing. Re-running the notebook reuses the cached models and trains only the
+> remainder.
 
 ---
 
-## ⚠️ Read this before quoting any number
+## Read this before quoting any number
 
-**The paper PDF was not available in the environment where this notebook was
-built.** It sits behind a publisher paywall and the execution environment had no
-route to it. Consequences, stated plainly:
+The paper PDF has been read; all parameters come from it (Appendix A / Table
+A.10 — this is the **simply-supported** case, not the fixed-end main text).
 
-- The paper's **method** is reproduced: multi-scale spatio-temporal Fourier
-  features plus NTK trace-based adaptive loss weighting, on a simply-supported
-  Euler–Bernoulli beam.
-- The paper's **numbers** are *not* reproduced and are *not* claimed. The beam
-  properties, training budget and reported errors are unknown to us. Every
-  "paper reported" cell in the final table reads `N/A (PDF unavailable)`.
-- Every parameter carries a provenance label — `PAPER (user)`, `PAPER (abstract)`,
-  `ASSUMED` or `OURS` — in the registry in Section 2 of the notebook.
-
-**To turn this into a true numerical replication:** overwrite the `ASSUMED` rows
-in the `PARAMS` table (Section 2, one cell) with the paper's values and re-run.
-Nothing else needs to change.
+- The paper's **method** is reproduced and verified against its own equations:
+  the architecture (Eqs. 38-43) and the NTK weight rule (Eq. 37) match.
+- The paper's **numbers** are **not** reproduced: ours 9.71e-1 against the
+  paper's 2.30e-3 on the paper's own 1 s window. That is a ~250x training-budget
+  deficit plus full-batch training (the regime the paper itself reports as
+  worse). Stated plainly in REPORT.md section 5.2, not glossed over.
+- **The proposed optimization does not work.** A controlled 2x2 gives an
+  antagonistic interaction of +0.8749, cancelling the NTK main effect of
+  -0.8796. Reported as a negative result with a measured mechanism.
 
 ---
 
