@@ -102,7 +102,7 @@ for st2 in SIGMA_T2_SWEEP:
     m, _ = evaluate(r["model"], nd, MODE_MAIN, nm)
     B = torch.randn(1, 64, generator=torch.Generator().manual_seed(SEED)) * st2
     sigma_sweep.append({"sigma_t2": st2, "max |B|": float(B.abs().max()),
-                        "spans omega*_3": bool(B.abs().max() >= nd.omega_star(MODE_MAIN)),
+                        f"spans omega*_{MODE_MAIN}": bool(B.abs().max() >= nd.omega_star(MODE_MAIN)),
                         "rel_L2": m["rel_l2"], "freq_rel_err": m["freq_rel_err"],
                         "RMSE": m["rmse"]})
 
@@ -129,10 +129,32 @@ fig.tight_layout()
 print("saved:", savefig(fig, "07_sigma_t2_sweep"))
 plt.show()
 
-BEST_SIGMA_T2 = float(sigma_df.loc[sigma_df["rel_L2"].idxmin(), "sigma_t2"])
-print(f"\nBest sigma_t2 at mode {MODE_MAIN} under OUR normalization: {BEST_SIGMA_T2:g}")
-print(f"Paper-literal sigma_t2 = 10 gives rel-L2 = "
-      f"{float(sigma_df.loc[sigma_df.sigma_t2==10,'rel_L2'].iloc[0]):.4e}")
+# --- selection rule ---------------------------------------------------------
+# sigma_t2 = 10 is a PAPER value. We only deviate from it if the sweep shows a
+# DECISIVE margin, because at the reduced sweep budget the run-to-run spread is
+# comparable to the differences between neighbouring sigma values, and picking
+# the arg-min of a noisy sweep would silently replace a paper parameter with a
+# fluctuation -- and then propagate it into every downstream experiment.
+DECISIVE_MARGIN = 0.20            # OURS: require >=20% lower rel-L2 to deviate
+
+arg_best = float(sigma_df.loc[sigma_df["rel_L2"].idxmin(), "sigma_t2"])
+e_best   = float(sigma_df["rel_L2"].min())
+e_paper  = float(sigma_df.loc[sigma_df.sigma_t2 == 10, "rel_L2"].iloc[0])
+improvement = 1.0 - e_best / e_paper
+
+BEST_SIGMA_T2 = arg_best if improvement >= DECISIVE_MARGIN else 10.0
+
+print(f"\nsweep arg-min          : sigma_t2 = {arg_best:g}  (rel-L2 {e_best:.4e})")
+print(f"paper-literal          : sigma_t2 = 10 (rel-L2 {e_paper:.4e})")
+print(f"improvement over paper : {improvement:+.1%}   "
+      f"(decisive threshold {DECISIVE_MARGIN:.0%})")
+print(f"-> sigma_t2 carried forward: {BEST_SIGMA_T2:g} "
+      f"({'sweep optimum -- decisive' if BEST_SIGMA_T2 != 10.0 else 'PAPER value kept -- sweep not decisive'})")
+if sigma_df['rel_L2'].min() > 0.7:
+    print("\n  CAUTION: every sigma in this sweep ends above rel-L2 0.7 at the reduced")
+    print("  sweep budget, i.e. no configuration has meaningfully learned yet. The")
+    print("  sweep is therefore UNDERPOWERED for ranking sigma, which is precisely")
+    print("  why the decisive-margin rule above defaults to the paper's value.")
 """))
 
     A(md(r"""
@@ -147,8 +169,16 @@ Two models are kept from here on, and both are reported:
 
 The optimization study in Sections 16–19 uses whichever of the two is the
 *stronger* enhanced baseline, because improving on a crippled baseline would be
-a meaningless result. Which one that is, is decided by the numbers above, and
-stated explicitly below.
+a meaningless result.
+
+**But we do not deviate from a paper value on a coin-flip.** The sweep runs at
+the reduced `ITERS_SWEEP` budget, where no configuration has converged and the
+spread between neighbouring $\sigma$ values is comparable to run-to-run noise.
+Taking the arg-min of such a sweep would quietly substitute a fluctuation for a
+published parameter — and then carry it into every downstream experiment. So the
+rule is explicit: **keep $\sigma_{t2}=10$ unless another value is at least 20 %
+better.** The cell below prints the margin actually observed and which value it
+selected, so the decision is visible rather than buried.
 """))
 
     A(code(r"""
