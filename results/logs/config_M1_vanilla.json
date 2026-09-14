@@ -1,0 +1,33 @@
+{
+  "name": "M1_vanilla",
+  "arch": "vanilla",
+  "use_ntk": false,
+  "use_causal": false,
+  "mode": 2,
+  "depth": 4,
+  "width": 200,
+  "m_fourier": 64,
+  "sigma_x": 1.0,
+  "sigma_t": [
+    1.0,
+    10.0
+  ],
+  "res_norm": true,
+  "n_collocation": 512,
+  "n_ic": 128,
+  "n_bc": 128,
+  "iters": 4000,
+  "lr": 0.001,
+  "lr_gamma": 0.1,
+  "ntk_every": 200,
+  "ntk_rows": 16,
+  "ntk_beta": 0.5,
+  "causal_bins": 32,
+  "causal_wmin": 0.1,
+  "n_data": 0,
+  "noise": 0.0,
+  "lambda_data": 1.0,
+  "seed": 1234,
+  "log_every": 100,
+  "tag": ""
+}
