@@ -1,24 +1,28 @@
 symbol,value,unit,provenance,note
-E,210000000000.0,Pa,ASSUMED,Structural steel. Paper value unknown.
-rho,7850.0,kg/m^3,ASSUMED,Structural steel. Paper value unknown.
-L,1.0,m,ASSUMED,Beam length. Paper value unknown.
-width,0.05,m,ASSUMED,Rectangular section width.
-height,0.005,m,ASSUMED,Rectangular section height.
-b,0.0,N.s/m^2,OURS,Viscous damping. Set to 0: the undamped case has a clean analytical reference (task spec).
-A_n,0.005,m,ASSUMED,Initial modal amplitude (5 mm).
-sigma_x,1.0,-,PAPER (user),Spatial Fourier feature std.
-sigma_t1,1.0,-,PAPER (user),Temporal Fourier scale 1.
-sigma_t2,10.0,-,PAPER (user),Temporal Fourier scale 2.
-depth,4,layers,PAPER (user),Hidden layers.
-width_nn,200,neurons,PAPER (user),Neurons per hidden layer.
-activation,tanh,-,PAPER (user),Hidden activation.
-m_fourier,64,-,ASSUMED,Fourier features per encoding. Paper value unknown.
-optimizer,Adam,-,ASSUMED,Standard for PINNs. Paper's choice unknown.
-lr,0.001,-,ASSUMED,Adam initial LR. Paper value unknown.
-lr_decay,0.1,-,OURS,Exponential decay factor over the full schedule.
-epochs,see 0,iters,ASSUMED,Paper's budget unknown; ours is set by the execution mode.
-batch,see 0,points,ASSUMED,Collocation points resampled per iteration.
-mode_n,2,-,OURS,Headline mode; chosen on measured tractability (Section 5.4). Modes 1-3 swept in Section 19.
-x_domain,"[0, L]",m,PAPER (abstract),Simply-supported span.
-t_domain,"[0, T1]",s,OURS,One period of the fundamental mode; mode n then shows n^2 cycles.
-metrics,"rel-L2, RMSE, max-err, PDE res, IC/BC err, freq err",-,OURS,Evaluation metrics (Section 9).
+E,200000000000.0,Pa,PAPER (Table A.10),Steel 1040.
+rho,7845.0,kg/m^3,PAPER (Table A.10),Steel 1040.
+L,2.75,m,PAPER (Table A.10),Beam length.
+a,0.03,m,PAPER (Table A.10),Square section side (width = height).
+A,0.0009,m^2,PAPER (Table A.10),= a^2. Verified.
+I,6.75e-08,m^4,PAPER (Table A.10),= a^4/12. Verified.
+b,0.0,N.s/m,PAPER (Table A.10),Undamped case. Paper's damped case uses b = 50.0.
+W_n,9.085,Hz,PAPER (Table A.10),"1st natural frequency; we compute 9.0825 from E,rho,L,A,I."
+EI/(rho A),1912.05,m^4/s^2,PAPER (derived),Paper prints 43.732 = sqrt of this in the PDE; see inconsistency 1.
+x_domain,"[0, 2.75]",m,PAPER (Eq. A.4),Simply-supported span.
+t_domain,"[0, 1]",s,PAPER (Eq. A.4),1 s window = 9.08 cycles of mode 1. This is the paper's difficulty.
+BC,u = u_xx = 0,-,PAPER (prose+A.3),Pinned-pinned; Eq. A.4 as printed is free-free (inconsistency 2).
+IC,"u0(x) static, u_t = 0",-,PAPER (Eq. A.2),u0 = F x (4x^2 - 3 l^2)/(48 E I); mode-1 projection used (Eq. A.3).
+depth,4,layers,PAPER (Section 4),Table 4 test 12 says 6; see inconsistency 3.
+width_nn,200,neurons,PAPER (Section 4),Neurons per hidden layer.
+activation,tanh,-,PAPER (Section 4),Hidden activation.
+sigma_x,1.0,-,PAPER (Section 4),M_x = 1 spatial Fourier mapping.
+sigma_t1,1.0,-,PAPER (Section 4),M_t = 2 temporal mappings.
+sigma_t2,10.0,-,PAPER (Section 4),Second temporal scale.
+optimizer,Adam,-,PAPER (Section 5),Adam.
+lr,0.0001,-,PAPER (Table 4 #12),Learning rate; paper found this the single most sensitive hyperparameter.
+batch,960,points,PAPER (Eq. A.6),N_u = N_ut = N_uxx = N_f = 960.
+mini_batch,32,points,PAPER (Section 5.1.1),"Critical: mini-batch 640 -> L2 7.32e-1, mini-batch 32 -> L2 4.64e-4."
+epochs,30000,epochs,PAPER (Appendix A),Simply-supported case; fixed-end case uses 45 000.
+m_fourier,64,-,OURS,Fourier features per mapping; paper does not state the count.
+mode_n,1,-,PAPER (Eq. A.3),Paper solves the first mode.
+metrics,"rel-L2, RMSE",-,"PAPER (Eqs. 44,45)",rel-L2 vs exact; RMSE vs FEA. We add PDE/IC/BC/frequency errors.

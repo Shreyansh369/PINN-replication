@@ -1,22 +1,22 @@
 quantity,value,unit
-A  (area),0.00025,m^2
-I  (2nd moment),5.20833e-10,m^4
-EI (rigidity),109.375,N.m^2
-rho*A (mass/length),1.9625,kg/m
-c = sqrt(EI/rhoA),7.46542,m^2/s
-T_ref (period mode 1),0.0852758,s
-beta_1,3.14159,1/m
-omega_1,73.6807,rad/s
-f_1,11.7267,Hz
-beta_2,6.28319,1/m
-omega_2,294.723,rad/s
-f_2,46.9066,Hz
-beta_3,9.42478,1/m
-omega_3,663.127,rad/s
-f_3,105.54,Hz
-beta_4,12.5664,1/m
-omega_4,1178.89,rad/s
-f_4,187.626,Hz
-beta_5,15.708,1/m
-omega_5,1842.02,rad/s
-f_5,293.166,Hz
+A  (area),0.0009,m^2
+I  (2nd moment),6.75e-08,m^4
+EI (rigidity),13500,N.m^2
+rho*A (mass/length),7.0605,kg/m
+c = sqrt(EI/rhoA),43.7269,m^2/s
+T_ref (period mode 1),0.110102,s
+beta_1,1.1424,1/m
+omega_1,57.0668,rad/s
+f_1,9.08246,Hz
+beta_2,2.28479,1/m
+omega_2,228.267,rad/s
+f_2,36.3299,Hz
+beta_3,3.42719,1/m
+omega_3,513.601,rad/s
+f_3,81.7422,Hz
+beta_4,4.56959,1/m
+omega_4,913.069,rad/s
+f_4,145.319,Hz
+beta_5,5.71199,1/m
+omega_5,1426.67,rad/s
+f_5,227.062,Hz

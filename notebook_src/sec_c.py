@@ -298,7 +298,7 @@ reproduce the number?" — the setup matches, the budget does not.
 
     A(code(r"""
 paper_cfg = base_cfg("P_paper_window", arch="fourier", use_ntk=True,
-                     mode=1, iters=ITERS_MAIN, lr=1e-4)
+                     mode=1, iters=ITERS_MAIN, lr=1e-4, tag="paper_window")
 run_experiment(paper_cfg, nd_paper)
 m_paper, _ = evaluate(RUNS["P_paper_window"]["model"], nd_paper, 1, "P_paper_window")
 

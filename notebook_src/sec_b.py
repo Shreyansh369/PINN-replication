@@ -325,10 +325,15 @@ class RunConfig:
     def key(self):
         '''Hash of everything that AFFECTS the result -- used for caching.
 
-        name/tag/log_every are excluded, so two configurations that differ only
-        in their label share one checkpoint instead of training twice.
+        `name` and `log_every` are excluded, so two configurations differing only
+        in their label share one checkpoint instead of training twice. `tag` IS
+        included, because it is what distinguishes runs on different domains.
         '''
-        skip = ("log_every", "name", "tag")
+        skip = ("log_every", "name")   # `tag` PARTICIPATES: it distinguishes runs
+                                       # that share a config but use a different
+                                       # non-dimensionalisation (e.g. the paper's
+                                       # 1 s window vs one fundamental period),
+                                       # which RunConfig does not otherwise record.
         d = {k: v for k, v in asdict(self).items() if k not in skip}
         return hashlib.md5(json.dumps(d, sort_keys=True, default=str).encode()).hexdigest()[:12]
 """))
