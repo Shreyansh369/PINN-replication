@@ -1,0 +1,6 @@
+sigma_t,max |B| (64 feats),mean |B|,reaches mode 1 (6.3),reaches mode 2 (25.1),reaches mode 3 (56.5)
+1,3.4105,0.825797,False,False,False
+10,34.105,8.25797,True,True,False
+20,68.2101,16.5159,True,True,True
+30,102.315,24.7739,True,True,True
+60,204.63,49.5478,True,True,True

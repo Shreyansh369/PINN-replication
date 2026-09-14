@@ -1,0 +1,13 @@
+{
+  "mode_name": "DEFAULT",
+  "iters_main": 4000,
+  "iters_sweep": 1000,
+  "depth": 4,
+  "width": 200,
+  "n_collocation": 512,
+  "n_ic": 128,
+  "n_bc": 128,
+  "seed": 1234,
+  "device": "cpu",
+  "dtype": "torch.float32"
+}
