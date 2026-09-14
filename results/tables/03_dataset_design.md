@@ -1,0 +1,8 @@
+| set                   | size          | sampling                     | influences training?   |
+|:----------------------|:--------------|:-----------------------------|:-----------------------|
+| TRAIN (observations)  | 1000          | random interior              | 18b/18c only           |
+| VAL (monitoring)      | 500           | random interior              | never                  |
+| TEST (evaluation)     | 201x201=40401 | uniform grid                 | never                  |
+| COLLOCATION (physics) | 512           | stratified-t, resampled/iter | yes (unlabelled)       |
+| IC points             | 128           | uniform x at t=0             | yes (unlabelled)       |
+| BC points             | 128           | x=0 and x=1                  | yes (unlabelled)       |

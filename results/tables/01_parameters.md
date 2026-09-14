@@ -1,0 +1,25 @@
+| symbol     | value                                               | unit    | provenance       | note                                                                                         |
+|:-----------|:----------------------------------------------------|:--------|:-----------------|:---------------------------------------------------------------------------------------------|
+| E          | 210000000000.0                                      | Pa      | ASSUMED          | Structural steel. Paper value unknown.                                                       |
+| rho        | 7850.0                                              | kg/m^3  | ASSUMED          | Structural steel. Paper value unknown.                                                       |
+| L          | 1.0                                                 | m       | ASSUMED          | Beam length. Paper value unknown.                                                            |
+| width      | 0.05                                                | m       | ASSUMED          | Rectangular section width.                                                                   |
+| height     | 0.005                                               | m       | ASSUMED          | Rectangular section height.                                                                  |
+| b          | 0.0                                                 | N.s/m^2 | OURS             | Viscous damping. Set to 0: the undamped case has a clean analytical reference (task spec).   |
+| A_n        | 0.005                                               | m       | ASSUMED          | Initial modal amplitude (5 mm).                                                              |
+| sigma_x    | 1.0                                                 | -       | PAPER (user)     | Spatial Fourier feature std.                                                                 |
+| sigma_t1   | 1.0                                                 | -       | PAPER (user)     | Temporal Fourier scale 1.                                                                    |
+| sigma_t2   | 10.0                                                | -       | PAPER (user)     | Temporal Fourier scale 2.                                                                    |
+| depth      | 4                                                   | layers  | PAPER (user)     | Hidden layers.                                                                               |
+| width_nn   | 200                                                 | neurons | PAPER (user)     | Neurons per hidden layer.                                                                    |
+| activation | tanh                                                | -       | PAPER (user)     | Hidden activation.                                                                           |
+| m_fourier  | 64                                                  | -       | ASSUMED          | Fourier features per encoding. Paper value unknown.                                          |
+| optimizer  | Adam                                                | -       | ASSUMED          | Standard for PINNs. Paper's choice unknown.                                                  |
+| lr         | 0.001                                               | -       | ASSUMED          | Adam initial LR. Paper value unknown.                                                        |
+| lr_decay   | 0.1                                                 | -       | OURS             | Exponential decay factor over the full schedule.                                             |
+| epochs     | see 0                                               | iters   | ASSUMED          | Paper's budget unknown; ours is set by the execution mode.                                   |
+| batch      | see 0                                               | points  | ASSUMED          | Collocation points resampled per iteration.                                                  |
+| mode_n     | 2                                                   | -       | OURS             | Headline mode; chosen on measured tractability (Section 5.4). Modes 1-3 swept in Section 19. |
+| x_domain   | [0, L]                                              | m       | PAPER (abstract) | Simply-supported span.                                                                       |
+| t_domain   | [0, T1]                                             | s       | OURS             | One period of the fundamental mode; mode n then shows n^2 cycles.                            |
+| metrics    | rel-L2, RMSE, max-err, PDE res, IC/BC err, freq err | -       | OURS             | Evaluation metrics (Section 9).                                                              |

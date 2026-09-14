@@ -90,6 +90,7 @@ import torch.nn as nn
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+from IPython.display import display, Markdown
 
 warnings.filterwarnings("ignore", message=".*requires_grad=True.*")
 
@@ -156,10 +157,17 @@ def savefig(fig, name, subdir="figures"):
     return path
 
 def save_table(df, name, float_fmt="%.6g"):
-    '''Persist a DataFrame as CSV (machine-readable) and Markdown (report-ready).'''
+    '''Persist a DataFrame as CSV (the source of truth) and, if possible, Markdown.
+
+    The Markdown rendering needs the optional `tabulate` package. It must never
+    be able to abort an experiment cell, so it is best-effort.
+    '''
     csv = DIRS["tables"] / f"{name}.csv"
     df.to_csv(csv, index=False, float_format=float_fmt)
-    (DIRS["tables"] / f"{name}.md").write_text(df.to_markdown(index=False))
+    try:
+        (DIRS["tables"] / f"{name}.md").write_text(df.to_markdown(index=False))
+    except Exception as exc:                 # e.g. tabulate not installed
+        print(f"  [warn] markdown for {name} skipped ({type(exc).__name__}); CSV written")
     return csv
 
 def save_json(obj, name, subdir="metrics"):
@@ -307,7 +315,6 @@ PARAMS = [
 param_df = pd.DataFrame(PARAMS, columns=["symbol", "value", "unit", "provenance", "note"])
 save_table(param_df, "01_parameters")
 
-from IPython.display import display, Markdown
 display(Markdown("### Parameter registry"))
 display(param_df)
 

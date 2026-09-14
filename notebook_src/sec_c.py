@@ -197,7 +197,7 @@ for nm, met in metrics_repro.items():
     repro_rows.append(metric_row(nm, met, RUNS[nm]["wall"]))
 
 repro_df = pd.DataFrame(repro_rows)
-repro_disp = repro_df.copy()
+repro_disp = repro_df.astype(object).copy()   # pandas 3 rejects str into float cols
 repro_disp.iloc[0, 1:] = "N/A (PDF unavailable)"
 save_table(repro_df, "07_reproduction_comparison")
 display(Markdown(f"### Reproduction comparison — mode {MODE_MAIN}, "
@@ -470,9 +470,18 @@ $$\mathcal{L}_{pde} = \frac{1}{N_c}\sum_{k} \hat r(x_k,t_k)^2$$
 
 to a **causally weighted** mean over $M$ time bins:
 
-$$\mathcal{L}_{pde}^{\text{causal}} = \frac{1}{M}\sum_{i=1}^{M} w_i\, \mathcal{L}_i,
+$$\mathcal{L}_{pde}^{\text{causal}} = \frac{\sum_{i=1}^{M} n_i\, w_i\, \mathcal{L}_i}{\sum_{i=1}^{M} n_i},
 \qquad
-\mathcal{L}_i = \frac{1}{|B_i|}\sum_{k\in B_i} \hat r(x_k,t_k)^2$$
+\mathcal{L}_i = \frac{1}{n_i}\sum_{k\in B_i} \hat r(x_k,t_k)^2,
+\qquad n_i = |B_i|$$
+
+Bins are weighted by their **population** $n_i$. This matters for fairness:
+with $w_i \equiv 1$ the expression collapses to
+$\sum_k \hat r_k^2 / N$, i.e. **exactly** the unweighted PDE loss of the
+baseline. Equal-weighting the bins instead would differ from the baseline
+whenever bin counts differ, and the "$\varepsilon \to 0$ recovers the baseline"
+guarantee below would only hold approximately. Unit test 12 checks this identity
+to $10^{-6}$ relative.
 
 $$\boxed{\;w_i = \exp\!\Big(-\varepsilon \sum_{j<i} \mathcal{L}_j\Big),
 \qquad w_i \ \text{treated as a constant (stop-gradient)}\;}$$
@@ -556,8 +565,12 @@ def causal_weights(res_pde, t_pde, n_bins, eps):
                          torch.cumsum(bin_loss, 0)[:-1]])
         w = torch.exp(-eps * cum)
 
-    occupied = cnts > 0
-    loss = (w * bin_loss)[occupied].sum() / occupied.sum().clamp(min=1)
+    # Weight each bin by its POPULATION, so that w == 1 reproduces the plain
+    # mean over collocation points exactly:
+    #     sum_i n_i L_i / sum_i n_i  =  sum_k r_k^2 / N
+    # (equal-weighting the bins instead would differ whenever bin counts differ,
+    #  and the "eps -> 0 recovers the baseline" guarantee would only be approximate).
+    loss = (w * cnts * bin_loss).sum() / cnts.sum().clamp(min=1.0)
     return w, bin_loss, loss
 
 
@@ -590,9 +603,11 @@ _r = torch.randn(512, 1) * 0.1
 _t = torch.rand(512, 1)
 _w0, _, _l0 = causal_weights(_r, _t, 32, 0.0)
 _plain = (_r ** 2).mean()
-check("12. eps=0 recovers the unweighted PDE loss",
-      torch.allclose(_w0, torch.ones_like(_w0)) and abs(float(_l0) - float(_plain)) < 1e-5,
-      f"causal={float(_l0):.6e} vs plain={float(_plain):.6e}")
+check("12. eps=0 recovers the unweighted PDE loss EXACTLY",
+      torch.allclose(_w0, torch.ones_like(_w0))
+      and abs(float(_l0) - float(_plain)) <= 1e-6 * float(_plain),
+      f"causal={float(_l0):.8e} vs plain={float(_plain):.8e}  "
+      f"(rel diff {abs(float(_l0)-float(_plain))/float(_plain):.2e})")
 _eps_c = calibrate_causal_eps(_r, _t, 32, 0.1)
 _w1, _, _ = causal_weights(_r, _t, 32, _eps_c)
 check("12b. eps calibration hits the requested minimum weight",
