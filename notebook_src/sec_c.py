@@ -679,8 +679,17 @@ plt.show()
 
 $w_{\min}$ (equivalently $\varepsilon$) is the single hyperparameter the proposed
 method introduces, so it must be tuned without touching the test grid. We sweep
-it at a reduced budget and pick by validation rel-$L^2$. Note that $w_{\min}=1$
-is in the sweep, so the sweep is allowed to conclude that causality does not help.
+it at a reduced budget and pick by validation rel-$L^2$.
+
+$w_{\min}=1$ (causality off, $\varepsilon=0$, i.e. exactly the enhanced baseline)
+**is** in the sweep, so the sweep is allowed to report that causality does not
+help — and it is reported if so. But it is not the value carried forward, for a
+structural reason: selecting it would make the "proposed" model identical to the
+baseline, and the $2\times2$ ablation would then compare every cell with itself
+and report an interaction of exactly zero by construction. So the sweep selects
+the best **active** strength, and the question *"does causality help at all?"* is
+settled by the full-budget ablation in Section 18 instead of by this short,
+admittedly underpowered sweep.
 
 **Fairness note.** Giving only the proposed model a hyperparameter sweep would
 bias the comparison. The enhanced baseline received its own equivalent sweep in
@@ -703,19 +712,52 @@ save_table(wmin_df, "09_causal_strength_sweep")
 display(Markdown("### Causality-strength sweep (validation only, reduced budget)"))
 display(wmin_df)
 
-CAUSAL_WMIN_BEST = float(wmin_df.loc[wmin_df["val rel-L2"].idxmin(), "w_min"])
+# --- selection rule ---------------------------------------------------------
+# w_min = 1.0 means eps = 0, i.e. causality OFF, i.e. exactly the enhanced
+# baseline. It is deliberately IN the sweep so the sweep is allowed to say
+# "causality does not help". But it must not be the value carried forward:
+# selecting it would make the "proposed" model mathematically identical to the
+# baseline, and the 2x2 ablation in Section 18 would then compare each cell with
+# itself and report a meaningless interaction of zero.
+#
+# So we separate the two questions:
+#   (a) what is the best ACTIVE causality strength?  -> carried into Sections 17-19
+#   (b) does causality help at all?                  -> answered by the FULL-budget
+#                                                       2x2 ablation, not by this
+#                                                       short, underpowered sweep
+_active = wmin_df[wmin_df["w_min"] < 1.0]
+_off = wmin_df[wmin_df["w_min"] >= 1.0]
+
+CAUSAL_WMIN_BEST = float(_active.loc[_active["val rel-L2"].idxmin(), "w_min"])
+_e_active = float(_active["val rel-L2"].min())
+
+print(f"best ACTIVE causality strength : w_min = {CAUSAL_WMIN_BEST:g} "
+      f"(val rel-L2 {_e_active:.4e})")
+if len(_off):
+    _e_off = float(_off["val rel-L2"].iloc[0])
+    print(f"causality OFF (w_min = 1)      : val rel-L2 {_e_off:.4e}")
+    if _e_off < _e_active:
+        print(f"\n  NOTE: at the reduced sweep budget ({ITERS_SWEEP} iters) causality OFF is")
+        print(f"  ahead by {(1 - _e_off/_e_active):.1%}. That is recorded, not hidden -- but it is")
+        print("  NOT the verdict: no configuration has converged at this budget, so the")
+        print("  sweep cannot rank them reliably (the same underpowering that forced the")
+        print("  decisive-margin rule on sigma_t2). The verdict comes from the full-budget")
+        print("  2x2 ablation in Section 18, which trains causality-off and causality-on")
+        print(f"  at {ITERS_MAIN} iterations under identical conditions.")
+    else:
+        print(f"\n  Causality ON is ahead of OFF by {(1 - _e_active/_e_off):.1%} at sweep budget.")
+CAUSALITY_OFF_WON_SWEEP = bool(len(_off) and float(_off["val rel-L2"].iloc[0]) < _e_active)
 fig, ax = plt.subplots(figsize=(6, 3.6))
 ax.semilogx(wmin_df["w_min"], wmin_df["val rel-L2"], "o-")
 ax.axvline(CAUSAL_WMIN_BEST, color="tab:red", ls="--",
-           label=f"selected $w_{{min}}$={CAUSAL_WMIN_BEST:g}")
+           label=f"best ACTIVE $w_{{min}}$={CAUSAL_WMIN_BEST:g}")
 ax.set(xlabel="$w_{min}$ (1.0 = causality off)", ylabel="validation rel-$L^2$",
        title="Causality strength sweep")
 ax.legend(fontsize=8)
 fig.tight_layout()
 print("saved:", savefig(fig, "11_causal_strength_sweep"))
 plt.show()
-print(f"Selected w_min = {CAUSAL_WMIN_BEST:g}  "
-      f"({'causality OFF -- the sweep prefers the baseline' if CAUSAL_WMIN_BEST >= 1.0 else 'causality ON'})")
+print(f"\nCarried into Sections 17-19: w_min = {CAUSAL_WMIN_BEST:g} (causality ON).")
 print("Chosen on validation only; the test grid was not consulted.")
 """))
 

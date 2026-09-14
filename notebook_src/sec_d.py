@@ -516,6 +516,8 @@ print(f'''
    that the paper's value is wrong.
 
 4. DOES THE PROPOSED OPTIMIZATION HELP?
+   (the causality-strength sweep at reduced budget preferred causality
+    {'OFF' if CAUSALITY_OFF_WON_SWEEP else 'ON'}; the full-budget 2x2 below is the actual verdict)
    enhanced baseline  rel-L2 = {E_base:.4e}
    proposed           rel-L2 = {E_prop:.4e}   ({gain:+.1%})
    verdict at mode {MODE_MAIN}: {'IMPROVED' if gain < 0 else 'NO IMPROVEMENT'}
