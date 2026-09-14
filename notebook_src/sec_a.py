@@ -24,33 +24,41 @@ manual edits and writes every figure, table, metric and checkpoint under `result
 
 ---
 
-## ⚠️ Provenance statement — read this first
+## Provenance statement — read this first
 
-**The paper PDF was not available in the environment in which this notebook was
-built.** The full text sits behind a publisher paywall and the execution
-environment had no route to it. Everything below therefore carries an explicit
-provenance label, and nothing is presented as "from the paper" unless it
-genuinely is.
+**The paper PDF is available and has been read.** Every physical parameter,
+hyperparameter and reported metric below is taken from it, with the table or
+equation number given. Items still marked `OURS` are deliberate choices of this
+study (compute budget, the proposed optimization, evaluation extras) and are
+never presented as the paper's.
+
+An earlier draft of this notebook was built without the PDF; all `ASSUMED`
+placeholders from that draft have been replaced with the published values.
 
 | Label | Meaning |
 |---|---|
-| `PAPER (user)` | Value supplied by the project owner, who has the PDF. Treated as a paper value. |
-| `PAPER (abstract)` | Confirmed from the publicly indexed abstract/metadata. |
-| `ASSUMED` | **Chosen by us.** The paper's value is unknown. Documented, defensible, and *not* claimed to match the paper. |
+| `PAPER (A.10)` etc. | Read directly from the paper, with its table/equation number. |
 | `OURS` | A deliberate methodological choice of this study, not part of the paper. |
 
-**Consequences, stated plainly:**
+**Which paper case this notebook replicates.** The paper's main text treats a
+**fixed-end** beam; the **simply-supported** beam is Appendix A. This notebook
+implements the *simply-supported* case, so the reference values throughout are
+Appendix A / Table A.10, not Table 3.
 
-1. We can replicate the paper's *method* (multi-scale Fourier features + NTK
-   adaptive loss weighting on an Euler–Bernoulli beam). We **cannot** claim to
-   replicate its *numbers*, because the beam properties, training budget and
-   reported errors are unknown to us.
-2. Section 12 therefore reports a **method-level reproduction**, and every
-   "paper reported" cell in the final table reads `N/A (PDF unavailable)`.
-   No paper metric is invented to fill a gap.
-3. To convert this into a true numerical replication, replace the `ASSUMED`
-   entries in the parameter table in Section 2 — they are all in one place — and
-   re-run. Nothing else needs to change.
+**What we can and cannot match.** The method, the beam, the domain, the
+architecture and the loss are all reproduced from the paper. The *training
+budget* is not: the paper trains 30 000 epochs with batch 960 and mini-batch 32
+on an RTX A6000, which is several orders of magnitude more gradient steps than
+this 4-CPU environment can deliver. Where our error is larger than the paper's,
+that gap is reported and attributed, not hidden.
+
+### Three inconsistencies found in the paper, and how we resolved them
+
+| # | What the paper says | Problem | Our resolution |
+|---|---|---|---|
+| 1 | PDE written as $43.732\,u_{xxxx} + u_{tt} = 0$ (Eqs. 46, A.4) | $43.732$ is $\sqrt{EI/\rho A}$, not $EI/\rho A$. Using it literally gives $f_1 = 1.37$ Hz, contradicting the $9.085$ Hz in Table A.10. Almost certainly a lost superscript. | Use $EI/\rho A = 1912.05$ from the Table A.10 material data, which reproduces $f_1 = 9.082$ Hz (paper: $9.085$). Verified in the tests. |
+| 2 | Eq. (A.4) gives BCs $u_{xx}=u_{xxx}=0$ at both ends | Those are **free–free** conditions, not simply supported. They contradict the surrounding prose ("displacement and bending moments … constrained to zero") and Eq. (A.3)'s $\beta_1 l = 3.1416 = \pi$, which only holds for pinned–pinned. | Use $u = u_{xx} = 0$, i.e. the prose and the mode shape, which are mutually consistent. |
+| 3 | Section 4 says "four hidden layers … 200 neurons"; Table 4 test 12 (selected) says 6 layers | Direct contradiction on depth. | Use **4 × 200** as stated in the framework description (Section 4); Table 4 is the fixed-end hyperparameter search. Noted in the parameter table. |
 """))
 
     # ------------------------------------------------------- reproducibility --
@@ -287,30 +295,47 @@ paper's absolute error figures.
 # ---------------------------------------------------------------------------
 PARAMS = [
     # symbol, value, unit, provenance, note
-    ("E",        2.1e11,  "Pa",      "ASSUMED",         "Structural steel. Paper value unknown."),
-    ("rho",      7850.0,  "kg/m^3",  "ASSUMED",         "Structural steel. Paper value unknown."),
-    ("L",        1.0,     "m",       "ASSUMED",         "Beam length. Paper value unknown."),
-    ("width",    0.05,    "m",       "ASSUMED",         "Rectangular section width."),
-    ("height",   0.005,   "m",       "ASSUMED",         "Rectangular section height."),
-    ("b",        0.0,     "N.s/m^2", "OURS",            "Viscous damping. Set to 0: the undamped case has a clean analytical reference (task spec)."),
-    ("A_n",      5e-3,    "m",       "ASSUMED",         "Initial modal amplitude (5 mm)."),
-    ("sigma_x",  1.0,     "-",       "PAPER (user)",    "Spatial Fourier feature std."),
-    ("sigma_t1", 1.0,     "-",       "PAPER (user)",    "Temporal Fourier scale 1."),
-    ("sigma_t2", 10.0,    "-",       "PAPER (user)",    "Temporal Fourier scale 2."),
-    ("depth",    4,       "layers",  "PAPER (user)",    "Hidden layers."),
-    ("width_nn", 200,     "neurons", "PAPER (user)",    "Neurons per hidden layer."),
-    ("activation", "tanh", "-",      "PAPER (user)",    "Hidden activation."),
-    ("m_fourier", 64,     "-",       "ASSUMED",         "Fourier features per encoding. Paper value unknown."),
-    ("optimizer", "Adam", "-",       "ASSUMED",         "Standard for PINNs. Paper's choice unknown."),
-    ("lr",       1e-3,    "-",       "ASSUMED",         "Adam initial LR. Paper value unknown."),
-    ("lr_decay", 0.1,     "-",       "OURS",            "Exponential decay factor over the full schedule."),
-    ("epochs",   "see 0", "iters",   "ASSUMED",         "Paper's budget unknown; ours is set by the execution mode."),
-    ("batch",    "see 0", "points",  "ASSUMED",         "Collocation points resampled per iteration."),
-    ("mode_n",   2,       "-",       "OURS",            "Headline mode; chosen on measured tractability (Section 5.4). Modes 1-3 swept in Section 19."),
-    ("x_domain", "[0, L]", "m",      "PAPER (abstract)","Simply-supported span."),
-    ("t_domain", "[0, T1]", "s",     "OURS",            "One period of the fundamental mode; mode n then shows n^2 cycles."),
-    ("metrics",  "rel-L2, RMSE, max-err, PDE res, IC/BC err, freq err", "-", "OURS", "Evaluation metrics (Section 9)."),
+    ("E",        2.0e11,  "Pa",      "PAPER (Table A.10)", "Steel 1040."),
+    ("rho",      7845.0,  "kg/m^3",  "PAPER (Table A.10)", "Steel 1040."),
+    ("L",        2.75,    "m",       "PAPER (Table A.10)", "Beam length."),
+    ("a",        0.030,   "m",       "PAPER (Table A.10)", "Square section side (width = height)."),
+    ("A",        9.0e-4,  "m^2",     "PAPER (Table A.10)", "= a^2. Verified."),
+    ("I",        6.75e-8, "m^4",     "PAPER (Table A.10)", "= a^4/12. Verified."),
+    ("b",        0.0,     "N.s/m",   "PAPER (Table A.10)", "Undamped case. Paper's damped case uses b = 50.0."),
+    ("W_n",      9.085,   "Hz",      "PAPER (Table A.10)", "1st natural frequency; we compute 9.0825 from E,rho,L,A,I."),
+    ("EI/(rho A)", 1912.05, "m^4/s^2","PAPER (derived)",   "Paper prints 43.732 = sqrt of this in the PDE; see inconsistency 1."),
+    ("x_domain", "[0, 2.75]", "m",   "PAPER (Eq. A.4)",  "Simply-supported span."),
+    ("t_domain", "[0, 1]",    "s",   "PAPER (Eq. A.4)",  "1 s window = 9.08 cycles of mode 1. This is the paper's difficulty."),
+    ("BC",   "u = u_xx = 0",  "-",   "PAPER (prose+A.3)","Pinned-pinned; Eq. A.4 as printed is free-free (inconsistency 2)."),
+    ("IC",   "u0(x) static, u_t = 0", "-", "PAPER (Eq. A.2)", "u0 = F x (4x^2 - 3 l^2)/(48 E I); mode-1 projection used (Eq. A.3)."),
+    ("depth",    4,       "layers",  "PAPER (Section 4)", "Table 4 test 12 says 6; see inconsistency 3."),
+    ("width_nn", 200,     "neurons", "PAPER (Section 4)", "Neurons per hidden layer."),
+    ("activation", "tanh", "-",      "PAPER (Section 4)", "Hidden activation."),
+    ("sigma_x",  1.0,     "-",       "PAPER (Section 4)", "M_x = 1 spatial Fourier mapping."),
+    ("sigma_t1", 1.0,     "-",       "PAPER (Section 4)", "M_t = 2 temporal mappings."),
+    ("sigma_t2", 10.0,    "-",       "PAPER (Section 4)", "Second temporal scale."),
+    ("optimizer", "Adam", "-",       "PAPER (Section 5)", "Adam."),
+    ("lr",       1e-4,    "-",       "PAPER (Table 4 #12)", "Learning rate; paper found this the single most sensitive hyperparameter."),
+    ("batch",    960,     "points",  "PAPER (Eq. A.6)",  "N_u = N_ut = N_uxx = N_f = 960."),
+    ("mini_batch", 32,    "points",  "PAPER (Section 5.1.1)", "Critical: mini-batch 640 -> L2 7.32e-1, mini-batch 32 -> L2 4.64e-4."),
+    ("epochs",   30000,   "epochs",  "PAPER (Appendix A)", "Simply-supported case; fixed-end case uses 45 000."),
+    ("m_fourier", 64,     "-",       "OURS",             "Fourier features per mapping; paper does not state the count."),
+    ("mode_n",   1,       "-",       "PAPER (Eq. A.3)",  "Paper solves the first mode."),
+    ("metrics",  "rel-L2, RMSE",     "-", "PAPER (Eqs. 44,45)", "rel-L2 vs exact; RMSE vs FEA. We add PDE/IC/BC/frequency errors."),
 ]
+
+# Values the paper REPORTS for the simply-supported beam (Appendix A) and its
+# method ladder (Table 5, fixed-end damped case).
+PAPER_REPORTED = {
+    "simply_supported_undamped": {"rel_L2": 2.3e-3, "RMSE_vs_FEA": 8.82e-4, "epochs": 30000},
+    "simply_supported_damped":   {"rel_L2": 4.07e-2, "RMSE_vs_FEA": 6.12e-4, "epochs": 30000},
+    "method_ladder_fixed_end_damped": {      # Table 5
+        "FCNN": 1.00, "Vanilla PINN": 1.11,
+        "PINN + NTK": 8.81e-1, "PINN + NTK + Fourier": 4.64e-4,
+    },
+    "inverse_damping_rel_err_pct": 1.41,     # Table 6
+}
+
 
 param_df = pd.DataFrame(PARAMS, columns=["symbol", "value", "unit", "provenance", "note"])
 save_table(param_df, "01_parameters")
@@ -318,9 +343,15 @@ save_table(param_df, "01_parameters")
 display(Markdown("### Parameter registry"))
 display(param_df)
 
-n_assumed = (param_df.provenance == "ASSUMED").sum()
-print(f"\n{n_assumed} of {len(param_df)} entries are ASSUMED (paper value unknown to us).")
-print("These are the rows to overwrite for a true numerical replication.")
+n_paper = param_df.provenance.str.startswith("PAPER").sum()
+print(f"\n{n_paper} of {len(param_df)} entries come directly from the paper; "
+      f"{len(param_df)-n_paper} are OURS.")
+print("\nPaper-reported results for this case (simply supported, Appendix A):")
+for k, v in PAPER_REPORTED["simply_supported_undamped"].items():
+    print(f"   undamped {k:12s} = {v}")
+print("\nPaper method ladder (Table 5, fixed-end damped):")
+for k, v in PAPER_REPORTED["method_ladder_fixed_end_damped"].items():
+    print(f"   {k:24s} rel-L2 = {v:g}")
 """))
 
     A(md(r"""
@@ -345,13 +376,14 @@ exactly the spectral-bias stress test this paper is about.
 @dataclass(frozen=True)
 class BeamParams:
     '''Physical Euler-Bernoulli beam parameters (SI units).'''
-    E: float = 2.1e11
-    rho: float = 7850.0
-    L: float = 1.0
-    width: float = 0.05
-    height: float = 0.005
-    b: float = 0.0
-    amplitude: float = 5e-3      # A_n, initial modal amplitude [m]
+    E: float = 2.0e11            # PAPER Table A.10 (Steel 1040)
+    rho: float = 7845.0          # PAPER Table A.10
+    L: float = 2.75              # PAPER Table A.10
+    width: float = 0.030         # PAPER Table A.10 (square section, a)
+    height: float = 0.030        # PAPER Table A.10
+    b: float = 0.0               # PAPER Table A.10 (undamped; damped case uses 50.0)
+    amplitude: float = 1e-3      # modal amplitude; relative L2 is amplitude-invariant
+    t_end: float = 1.0           # PAPER Eq. (A.4): t in [0, 1] s
 
     @property
     def A(self):    return self.width * self.height              # cross-section area
@@ -454,22 +486,39 @@ $$\boxed{\;\alpha\, u^{*}_{x^*x^*x^*x^*} \;+\; u^{*}_{t^*t^*} \;+\; \zeta\, u^{*
 \alpha = \frac{EI\,T_{\mathrm{ref}}^{2}}{\rho A L^{4}}, \qquad
 \zeta = \frac{b\,T_{\mathrm{ref}}}{\rho A}$$
 
-Two consequences worth checking, because they are strong correctness tests:
+### Two choices of $T_{\mathrm{ref}}$, and why it matters
+
+$T_{\mathrm{ref}}$ sets the *difficulty*, because it decides how many
+oscillations the network must fit across $t^{*}\in[0,1]$.
+
+**(a) The paper's window** (`PAPER`, Eq. A.4): $t\in[0,1]\,\mathrm{s}$, so
+$T_{\mathrm{ref}} = 1\,\mathrm{s}$ and
+
+$$\omega^{*}_1 = \omega_1 \cdot 1\,\mathrm{s} = 57.07
+\;\;\Longrightarrow\;\; 9.08 \text{ cycles of mode 1 in the window}$$
+
+$$\alpha = \frac{EI\,T_{\mathrm{ref}}^2}{\rho A L^4} = \frac{1912.05}{2.75^4} = 33.43$$
+
+**(b) One fundamental period** (`OURS`, used for the controlled experiments):
+$T_{\mathrm{ref}} = 2\pi/\omega_1$. Then the algebra collapses:
 
 $$\sqrt{\alpha} = \frac{c\,T_{\mathrm{ref}}}{L^{2}}
 = \frac{\omega_1 L^{2}}{\pi^{2}}\cdot\frac{2\pi}{\omega_1}\cdot\frac{1}{L^{2}}
 = \frac{2}{\pi}
-\;\;\Longrightarrow\;\; \alpha = \frac{4}{\pi^{2}} \approx 0.4053 \quad\text{(always, for any beam)}$$
+\;\;\Longrightarrow\;\; \alpha = \frac{4}{\pi^{2}} \approx 0.4053$$
 
-$$\omega^{*}_n = \omega_n T_{\mathrm{ref}} = (n\pi)^{2}\sqrt{\alpha} = 2\pi n^{2}
-\;\;\Longrightarrow\;\; \text{mode } n \text{ completes exactly } n^{2} \text{ cycles on } t^{*}\in[0,1]$$
+$$\omega^{*}_n = (n\pi)^{2}\sqrt{\alpha} = 2\pi n^{2}
+\;\;\Longrightarrow\;\; \text{mode } n \text{ completes exactly } n^{2} \text{ cycles}$$
 
-So $\alpha$ is a *universal constant* of this non-dimensionalization — it does
-not depend on the `ASSUMED` beam properties at all. **That is an important
-robustness result for this study:** the non-dimensional learning problem that
-all four models actually solve is fixed by the mode number alone, so our
-method-level comparison is independent of the beam parameters we had to guess.
-The beam properties only set the dictionary back to physical units.
+Under (b) $\alpha$ is a *universal constant* — independent of the beam
+entirely. That has a useful consequence: **the non-dimensional learning problem
+under (b) is fixed by the mode number alone**, so the controlled comparison in
+Sections 13–19 is unaffected by the beam's physical properties; they only
+convert results back to SI units.
+
+Choice (b) is what the controlled experiments use, because (a) at 9.08 cycles is
+out of reach at our compute budget (Section 5.4). Section 13.6 runs (a) directly
+so the paper's own difficulty is measured rather than side-stepped.
 
 Residuals map back exactly:
 
@@ -496,8 +545,9 @@ class NonDim:
     residual_scale: float        # r_phys = residual_scale * r_nondim
 
     @staticmethod
-    def from_beam(p: BeamParams):
-        T = p.T_ref()
+    def from_beam(p: BeamParams, T_ref=None):
+        '''T_ref=None -> one fundamental period (OURS); pass p.t_end for the paper window.'''
+        T = p.T_ref() if T_ref is None else float(T_ref)
         return NonDim(
             alpha=p.EI * T ** 2 / (p.rhoA * p.L ** 4),
             zeta=p.b * T / p.rhoA,
@@ -514,9 +564,15 @@ class NonDim:
     def t_to_phys(self, ts):  return ts * self.T_ref
     def u_to_phys(self, us):  return us * self.U0
 
-nd = NonDim.from_beam(beam)
+nd = NonDim.from_beam(beam)                       # (b) one fundamental period -- OURS
+nd_paper = NonDim.from_beam(beam, T_ref=beam.t_end)  # (a) the paper's 1 s window
 
-print(f"alpha  = {nd.alpha:.10f}   (4/pi^2 = {4/math.pi**2:.10f})")
+print(f"(b) OURS   T_ref = {nd.T_ref:.6e} s   alpha = {nd.alpha:.10f} "
+      f"(4/pi^2 = {4/math.pi**2:.10f})")
+print(f"(a) PAPER  T_ref = {nd_paper.T_ref:.6e} s   alpha = {nd_paper.alpha:.4f}")
+print(f"    paper window holds {nd_paper.omega_star(1)/(2*math.pi):.3f} cycles of mode 1 "
+      f"(omega* = {nd_paper.omega_star(1):.3f})")
+print()
 print(f"zeta   = {nd.zeta:.6f}   (undamped)")
 print(f"T_ref  = {nd.T_ref:.6e} s     residual scale = {nd.residual_scale:.6e} N/m")
 print()
@@ -738,11 +794,20 @@ print(f"\nHeadline mode n = {MODE_MAIN}  ->  omega* = {nd.omega_star(MODE_MAIN):
 before designing the experiment, on the enhanced (Fourier + NTK) model, at the
 paper architecture (4x200 tanh), with everything else as specified:
 
-| mode | cycles in window | $\omega^*_n$ | pilot budget | rel-$L^2$ reached |
+| setting | cycles in window | $\omega^*$ | pilot budget | rel-$L^2$ reached |
 |---|---|---|---|---|
-| 1 | 1 | 6.3 | 1 500 iters | **0.0096** — converges cleanly |
-| 2 | 4 | 25.1 | 3 000 iters | **0.528**, still descending — partially converged |
-| 3 | 9 | 56.5 | 3 000 iters | **0.918** — essentially no learning |
+| mode 1, window (b) | 1 | 6.3 | 1 500 iters | **0.0096** — converges cleanly |
+| mode 2, window (b) | 4 | 25.1 | 3 000 iters | **0.528**, still descending |
+| mode 3, window (b) | 9 | 56.5 | 3 000 iters | **0.918** — essentially no learning |
+| **mode 1, paper window (a)** | **9.08** | **57.1** | — | comparable to the mode-3 row: out of reach here |
+
+Note the last row: **the paper's own problem sits at 9.08 cycles**, essentially
+the same difficulty as our mode-3 row. The paper reaches rel-$L^2 = 2.3\times10^{-3}$
+there with 30 000 epochs (batch 960, mini-batch 32) on an RTX A6000 — several
+orders of magnitude more gradient steps than this environment can supply. So the
+difficulty ordering we measure is consistent with the paper; what we lack is
+budget, and Section 13.6 reports that gap explicitly instead of implying we
+matched it.
 
 Mode 1 is too easy to separate four methods; mode 3 is not learnable by *any*
 of them inside the compute available here (4 CPU cores), so a comparison there

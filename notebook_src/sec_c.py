@@ -18,6 +18,15 @@ Every model below is trained under **identical** conditions except for the one
 mechanism under test: same beam, same PDE, same mode, same IC/BC, same sampler,
 same optimizer, same LR schedule, same iteration budget, same seed, same test
 grid.
+
+### Two deliberate departures from the paper, both `OURS`, both budget-driven
+
+| Setting | Paper | Here | Why |
+|---|---|---|---|
+| Learning rate | $10^{-4}$ (Table 4 #12) | $10^{-3}$ decayed | The paper's $10^{-4}$ is tuned for 30 000 epochs. At our two-to-three-orders-smaller budget it barely leaves the initialisation. Section 13.6 uses the paper's $10^{-4}$ for the paper-faithful run. |
+| Batching | batch 960, **mini-batch 32** | full batch, resampled each step | Mini-batching is one of the paper's most influential knobs (640 → rel-$L^2$ 0.732 vs 32 → 4.64e-4). Implementing it properly costs 30 optimizer steps per epoch, which we cannot afford. **This is very likely a major part of our accuracy gap** and is flagged as such rather than glossed over. |
+
+Neither departure biases the *comparison*: all four models share them exactly.
 """))
 
     A(code(r"""
@@ -219,7 +228,9 @@ def metric_row(label, met, wall, extra=None):
         row.update(extra)
     return row
 
-repro_rows = [{"Model": "Paper (Söyleyici & Ünver 2025)", "rel-L2": np.nan, "RMSE": np.nan,
+_pr = PAPER_REPORTED["simply_supported_undamped"]
+repro_rows = [{"Model": f"PAPER Appendix A (30000 epochs, GPU)",
+               "rel-L2": _pr["rel_L2"], "RMSE": _pr["RMSE_vs_FEA"],
                "max err": np.nan, "PDE res (nd)": np.nan, "PDE res [N/m]": np.nan,
                "IC err": np.nan, "vel-IC err": np.nan, "BC err": np.nan,
                "freq err": np.nan, "train [s]": np.nan, "infer [ms]": np.nan}]
@@ -228,6 +239,11 @@ for nm, met in metrics_repro.items():
 
 repro_df = pd.DataFrame(repro_rows)
 repro_disp = repro_df.astype(object).copy()   # pandas 3 rejects str into float cols
+# the paper reports only rel-L2 and an RMSE-vs-FEA; everything else it does not state
+for _c in ["max err", "PDE res (nd)", "PDE res [N/m]", "IC err", "vel-IC err",
+           "BC err", "freq err", "train [s]", "infer [ms]"]:
+    repro_disp.loc[0, _c] = "not reported"
+
 repro_disp.iloc[0, 1:] = "N/A (PDF unavailable)"
 save_table(repro_df, "07_reproduction_comparison")
 display(Markdown(f"### Reproduction comparison — mode {MODE_MAIN}, "
@@ -239,16 +255,82 @@ print("-" * 74)
 print("  Method-level reproduction : IMPLEMENTED and RUN")
 print("      (multi-scale Fourier features + NTK trace-based adaptive weighting,")
 print("       Euler-Bernoulli beam, simply supported, single-mode IC)")
-print("  Numerical reproduction    : NOT POSSIBLE IN THIS ENVIRONMENT")
-print("      reason: the paper PDF was unavailable, so the beam properties,")
-print("      training budget and reported error values are unknown to us.")
+print("  Physical setup            : MATCHES THE PAPER (Table A.10 / Eq. A.4)")
+print("  Numerical reproduction    : NOT MATCHED -- budget-limited, see Section 13.6")
+print(f"      paper : rel-L2 {_pr['rel_L2']:.2e} at {_pr['epochs']} epochs")
+print("              (batch 960, mini-batch 32, RTX A6000)")
+print(f"      ours  : see below, at {ITERS_MAIN} full-batch iterations on {DEVICE}")
 print(f"  Our rel-L2 (vanilla)      : {metrics_repro['M1_vanilla']['rel_l2']:.4e}")
 print(f"  Our rel-L2 (+Fourier)     : {metrics_repro['M2_fourier']['rel_l2']:.4e}")
 print(f"  Our rel-L2 (+Fourier+NTK) : {metrics_repro['M3_fourier_ntk']['rel_l2']:.4e}")
 if ENHANCED != "M3_fourier_ntk":
     print(f"  Our rel-L2 (bandwidth-matched): {metrics_repro[ENHANCED]['rel_l2']:.4e}")
-print("  Paper reported rel-L2     : N/A (PDF unavailable) -- NOT fabricated")
+print(f"  PAPER reported rel-L2     : {_pr['rel_L2']:.2e}  (Appendix A, undamped)")
 print("-" * 74)
+
+# --- the paper's own method ladder, for comparison with ours ---------------
+_ladder = PAPER_REPORTED["method_ladder_fixed_end_damped"]
+ladder_df = pd.DataFrame({
+    "Method": list(_ladder.keys()),
+    "PAPER rel-L2 (Table 5, fixed-end damped)": list(_ladder.values()),
+})
+save_table(ladder_df, "07b_paper_method_ladder")
+display(Markdown("### The paper's own method ladder (its Table 5)"))
+display(ladder_df)
+print("Note the shape of the paper's result: NTK alone barely improves on vanilla")
+print("(1.11 -> 0.881), and only NTK **combined with** Fourier features reaches")
+print("4.64e-4. Our Section 13.2 finds the same qualitative structure from the")
+print("other direction -- Fourier alone barely moves rel-L2, and the combination")
+print("is what works. Neither ingredient is sufficient on its own.")
+"""))
+
+    A(md(r"""
+## 13.6 The paper's own difficulty: the full 1-second window
+
+Everything above runs on time window **(b)** (one fundamental period), because
+that is what fits the compute budget. The paper's window is **(a)**:
+$t\in[0,1]\,$s, which holds 9.08 cycles of mode 1.
+
+This cell trains the enhanced baseline on the paper's exact problem, at the
+budget we can afford, and states the gap. It is the honest answer to "did you
+reproduce the number?" — the setup matches, the budget does not.
+"""))
+
+    A(code(r"""
+paper_cfg = base_cfg("P_paper_window", arch="fourier", use_ntk=True,
+                     mode=1, iters=ITERS_MAIN, lr=1e-4)
+run_experiment(paper_cfg, nd_paper)
+m_paper, _ = evaluate(RUNS["P_paper_window"]["model"], nd_paper, 1, "P_paper_window")
+
+_pr = PAPER_REPORTED["simply_supported_undamped"]
+gap_df = pd.DataFrame([
+    {"source": "PAPER (Appendix A)", "rel-L2": _pr["rel_L2"],
+     "budget": f"{_pr['epochs']} epochs, batch 960, mini-batch 32",
+     "hardware": "NVIDIA RTX A6000"},
+    {"source": "OURS (same beam, same window)", "rel-L2": m_paper["rel_l2"],
+     "budget": f"{ITERS_MAIN} full-batch iterations, {N_COLLOCATION} collocation pts",
+     "hardware": str(DEVICE)},
+])
+save_table(gap_df, "07c_paper_window_gap")
+display(Markdown("### Paper's window (9.08 cycles): paper vs ours"))
+display(gap_df)
+
+print(f"ratio ours/paper rel-L2 : {m_paper['rel_l2']/_pr['rel_L2']:.1f}x")
+print(f"frequency error (ours)  : {m_paper['freq_rel_err']:.3%}")
+print()
+print("Attribution of the gap, in order of likely size:")
+print("  1. Training budget. The paper runs 30 000 epochs over a 960-point batch")
+print("     in mini-batches of 32, i.e. of order 1e6 gradient steps. We run")
+print(f"     {ITERS_MAIN} full-batch steps -- roughly two to three orders of magnitude fewer.")
+print("  2. Mini-batching. The paper reports mini-batch size as one of its most")
+print("     important knobs (640 -> L2 7.32e-1 vs 32 -> L2 4.64e-4). We use full")
+print("     batches, i.e. the regime the paper found WORSE.")
+print("  3. Hardware. A6000 GPU vs 4 CPU threads here.")
+print("  4. Fourier feature count, which the paper does not state (we use 64).")
+print()
+print("What this does and does not license us to say: the method and the physical")
+print("setup are reproduced; the published error value is NOT reproduced, and")
+print("nothing in this notebook should be read as claiming otherwise.")
 """))
 
     A(md(r"""
