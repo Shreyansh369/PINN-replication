@@ -38,7 +38,11 @@ def per_row_sq_grad_norms(r, params, chunk=64, vectorised=True):
     return out
 
 
-def ntk_traces(residuals, params, max_rows=None, trace_norm="mean", vectorised=True):
+def ntk_traces(residuals, params, max_rows=None, trace_norm="mean", vectorised=None):
+    """vectorised=None: batched backward on >1 thread, per-row loop on 1 thread (measured faster and
+    ~0.5 GB lighter there). Both are exact and agree to 1e-10 (tests)."""
+    if vectorised is None:
+        vectorised = torch.get_num_threads() > 1
     traces, rows = {}, 0
     for name, r in residuals.items():
         rv = r.reshape(-1)

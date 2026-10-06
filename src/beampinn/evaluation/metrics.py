@@ -26,7 +26,7 @@ def grid(L, T, nx, nt):
 
 
 @torch.no_grad()
-def predict(model, X, T, chunk=65536):
+def predict(model, X, T, chunk=16384):          # 16k: lower peak RSS and faster on 1 thread
     dt = next(model.parameters()).dtype
     xf = torch.from_numpy(X.reshape(-1, 1)).to(dt)
     tf = torch.from_numpy(T.reshape(-1, 1)).to(dt)
@@ -56,7 +56,7 @@ def validation_metrics(model, refs, L, T):
     return l2_pair(predict(model, X, Tm), refs, X, Tm)
 
 
-def _autograd_field(model, X, T, fn, chunk=4096):
+def _autograd_field(model, X, T, fn, chunk=1024):   # 4096 peaked at ~3 GB (4th-order graph)
     dt = next(model.parameters()).dtype
     xs = torch.from_numpy(X.reshape(-1, 1)).to(dt)
     ts = torch.from_numpy(T.reshape(-1, 1)).to(dt)

@@ -203,9 +203,12 @@ class Trainer:
         write_history(self.paths["logs"] / "history.csv", self.history)
 
     def finalise(self):
+        train_peak = max(self.acc["peak_rss_mb"], peak_rss_mb())   # training memory (this segment)
+        reset_peak_rss()
         t0 = time.perf_counter()
         metrics, _ = evaluate_full(self.model, self.bm, self.refs, self.c2, self.gamma)
         eval_s = time.perf_counter() - t0
+        eval_peak = peak_rss_mb()
         self.save("final.pt")
         bm = self.bm
         out = {"run_id": self.run_id, "name": self.cfg.name, "benchmark_id": bm.benchmark_id,
@@ -216,7 +219,8 @@ class Trainer:
                "precision": self.cfg.precision, "device": self.cfg.device,
                "budget_label": self.cfg.train.budget_label, "final_eval_seconds": eval_s,
                "peak_vram_mb": peak_vram_mb(), **self.acc, **metrics}
-        out["peak_rss_mb"] = max(self.acc["peak_rss_mb"], peak_rss_mb())
+        out["peak_rss_mb"] = train_peak          # TRAINING peak (reported as 'memory')
+        out["peak_rss_eval_mb"] = eval_peak       # final-evaluation peak, reported separately
         write_json(self.paths["logs"] / "metrics.json", out)
         write_json(self.paths["logs"] / "runtime.json",
                    {"train_seconds": self.acc["train_seconds"], "ntk_seconds": self.acc["ntk_seconds"],
