@@ -1,0 +1,5 @@
+FE-D-M1 current  g=(t/T)^2                         N* range [  -8368.7,   -1.02]  |N*| max/min over t>0.1 s: 8.37e+03 / 1.02
+FE-D-M1 tanh^2(w t), w=omega_1 from PDE coeffs     N* range [     -1.9,   -0.16]  |N*| max/min over t>0.1 s: 1.93 / 0.338
+FE-D-M2 current  g=(t/T)^2                         N* range [ -63589.4,   -1.00]  |N*| max/min over t>0.1 s: 6.36e+04 / 0.995
+FE-D-M2 tanh^2(w t), w=omega_1 from PDE coeffs     N* range [     -2.0,   -0.06]  |N*| max/min over t>0.1 s: 1.98 / 0.312
+FE-D-M2 with FROZEN tanh^2(w1 t), w1 = beam fundamental 129.37 rad/s: N* range [-3.80, -0.06]
