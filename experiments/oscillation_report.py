@@ -60,7 +60,8 @@ def report(run_id):
     last = [r for r in h if r.get("loss")][-1]
     out = {"run_id": run_id, "name": m["name"], "steps": m["optimizer_steps"],
            "L2_paper": m["L2_paper"], "L2_exact": m["L2_exact"], "best_L2_exact": min(float(r["L2_exact"]) for r in h if r.get("L2_exact")),
-           "fit_w": m["fit_w"], "w_exact": ref.omega_d, "freq_ratio": w_ratio, "amp_ratio": amp_ratio,
+           "fit_w": m["fit_w"], "w_exact": ref.omega_d, "freq_ratio": w_ratio,
+           "fit_decay": m["fit_lam"], "decay_exact": 0.5 * ref.gamma, "amp_ratio": amp_ratio,
            "max_ut_ratio": ut_ratio, "PDE_residual_rel": m["PDE_residual_rel"], "IC_u_max": m["IC_u_max"],
            "IC_ut_max": m["IC_ut_max"], "BC_error_max": m["BC_error_max"],
            "train_seconds": m["train_seconds"], "ntk_seconds": m["ntk_seconds"], "rad_seconds": m.get("rad_seconds", 0.0),
@@ -78,7 +79,7 @@ if __name__ == "__main__":
     rows = [report(r) for r in args]
     for r in rows:
         print(f"{r['name']:16s} L2p {r['L2_paper']:.3e} L2e {r['L2_exact']:.3e} (best {r['best_L2_exact']:.3e}) "
-              f"w_fit/w {r['freq_ratio']:+.3f} amp {r['amp_ratio']:.2f} |u_t| {r['max_ut_ratio']:.2f} "
+              f"w_fit/w {r['freq_ratio']:+.3f} decay {r['fit_decay']:.2f}/{r['decay_exact']:.2f} amp {r['amp_ratio']:.2f} |u_t| {r['max_ut_ratio']:.2f} "
               f"PDE {r['PDE_residual_rel']:.2e} IC {r['IC_u_max']:.2e} BC {r['BC_error_max']:.2e} "
               f"t {r['train_seconds']:.0f}s -> {r['verdict']}")
         print("     " + " ".join(f"{k}={v:.2e}" for k, v in r.items() if k.startswith(("lam_", "gradnorm_"))))

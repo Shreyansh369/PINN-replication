@@ -39,13 +39,21 @@ def style(ax):
     ax.tick_params(colors=MUTED, labelsize=8)
 
 
-def main(run_ids, tag="phaseE"):
+def velocity_trace(model, xn, t):
+    from beampinn.evaluation.metrics import _autograd_field
+    from beampinn.losses.residuals import d
+    X = np.full((len(t), 1), xn); T = t[:, None]
+    return _autograd_field(model, X, T, lambda xx, tt: d(model(xx, tt), tt)).ravel()
+
+
+def main(run_ids, tag="phaseE", velocity=False):
     import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
     torch.set_num_threads(4)
     n = len(run_ids)
-    fig, axes = plt.subplots(n, 1, figsize=(11, 2.3 * n), facecolor=BG, squeeze=False)
+    ncol = 2 if velocity else 1
+    fig, axes = plt.subplots(n, ncol, figsize=(11 if ncol == 1 else 15, 2.3 * n), facecolor=BG, squeeze=False)
     rad_runs = []
-    for ax, rid in zip(axes[:, 0], run_ids):
+    for row_i, (ax, rid) in enumerate(zip(axes[:, 0], run_ids)):
         cfg, bm, refs, model, blob = load(rid)
         t = np.linspace(0, bm.t_end, 2001)
         xn = refs["exact"].x_norm
@@ -57,9 +65,16 @@ def main(run_ids, tag="phaseE"):
         ax.set_ylabel(f"u(x={xn:.2f} m) [mm]", fontsize=8)
         ax.set_title(f"{cfg.name}  ({blob['step']:,} steps)", fontsize=9, color=INK, loc="left")
         ax.legend(fontsize=7, frameon=False, loc="upper right")
+        if velocity:
+            av = axes[row_i, 1]; style(av)
+            av.plot(t, refs["exact"].u(xn, t, 0, 1), color=EXACT, lw=1.6, label="exact")
+            av.plot(t, velocity_trace(model, xn, t), color=PRED, lw=1.2, ls="--", label="PINN")
+            av.set_ylabel("u_t [m/s]", fontsize=8); av.set_title("mid-span velocity", fontsize=9, loc="left")
+            av.legend(fontsize=7, frameon=False, loc="upper right")
         if blob.get("rad_snapshots"):
             rad_runs.append((cfg.name, bm, blob["rad_snapshots"]))
-    axes[-1, 0].set_xlabel("t [s]", fontsize=8)
+    for a in axes[-1, :]:
+        a.set_xlabel("t [s]", fontsize=8)
     fig.tight_layout(); fig.savefig(RO / "figures" / f"{tag}_midspan_traces.png", dpi=150, facecolor=BG)
     plt.close(fig)
     if rad_runs:
