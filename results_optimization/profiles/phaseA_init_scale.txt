@@ -1,0 +1,7 @@
+variant                                  L_u      L_ut      L_ux       L_f |    lam_u   lam_ut   lam_ux | L2_init  |u|rms/A0
+C0 (2pi, physical, bias N(0,1))     1.80e-01  4.54e-02  7.98e-03  2.32e+12 |  1.1e+14  1.0e+13  4.8e+14 |  46.16    7.71
+C0 bias zeros                       9.41e-03  6.42e+00  2.01e-01  1.27e+14 |  3.5e+16  1.9e+13  8.6e+14 |   8.95    1.49
+C0-rc (no 2pi, standardised)        1.85e-01  1.66e-02  3.53e-04  7.92e+06 |  2.3e+08  1.1e+08  2.7e+10 |  48.23    8.05
+C0-rc bias zeros                    5.37e-03  1.48e+00  1.10e-02  2.36e+08 |  7.1e+10  9.7e+07  3.4e+10 |   7.96    1.33
+2pi, unit-normalised inputs         1.85e-01  3.02e-02  1.90e-03  8.67e+08 |  3.2e+10  3.0e+09  1.1e+12 |  47.01    7.87
+paper Fig. 5(b), damped FE, first logged point (epoch 0): L_r ~1e8-1e9, L_ut ~1e1-1e2, L_u ~1e-2..1e-1, L_ux ~1e-2 (read from plot, +-1 decade)
