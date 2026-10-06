@@ -114,3 +114,67 @@ def test_hard_constraint_config_guards():
     c = _cfg(hard=False, rad=True); c.sampler.rad.every = 3                   # not epoch-aligned
     with pytest.raises(ValueError):
         c.validate()
+
+
+# ------------------------------------------------------------- Phase X additions
+def _hard_tanh(bid="FE-D-M1", seed=0):
+    cfg = ExperimentConfig(seed=seed)
+    cfg.model.depth, cfg.model.width, cfg.model.m_fourier = 2, 16, 8
+    bm = get_benchmark(bid)
+    net = build_model(cfg, bm).double()
+    w1 = get_benchmark("FE-D-M1").fundamental_omega()
+    return HardConstrainedFF(net, bm.reference("exact"), bm.L, bm.t_end, "tanh2", w1).double(), bm
+
+
+def test_fundamental_omega_is_mode1_frequency_from_pde_and_bcs():
+    b1, b2 = get_benchmark("FE-D-M1"), get_benchmark("FE-D-M2")
+    assert abs(b1.fundamental_omega() - b1.reference("exact").omega) < 1e-9
+    assert b2.fundamental_omega() == b1.fundamental_omega()          # mode-independent
+    assert abs(b1.fundamental_omega() - 129.37) < 0.01
+
+
+@pytest.mark.parametrize("bid", ["FE-D-M1", "FE-D-M2"])
+def test_tanh2_hard_constraints_satisfy_all_ics_and_bcs_exactly(bid):
+    m, bm = _hard_tanh(bid, seed=4)
+    ref = bm.reference("exact")
+    x = torch.linspace(0, bm.L, 101, dtype=torch.float64).reshape(-1, 1).requires_grad_(True)
+    t0 = torch.zeros_like(x).requires_grad_(True)
+    u = m(x, t0)
+    assert np.abs(u.detach().numpy().ravel() - ref.u0(x.detach().numpy().ravel())).max() < 1e-12
+    assert float(d(u, t0).abs().max()) < 1e-12
+    t = torch.rand(200, 1, dtype=torch.float64) * bm.t_end
+    for xe in (0.0, bm.L):
+        xb = torch.full_like(t, xe).requires_grad_(True)
+        ub = m(xb, t)
+        assert float(ub.abs().max()) / bm.A0 < 1e-12
+        assert float(dxk(ub, xb, 1).abs().max()) * bm.L / bm.A0 < 1e-10
+
+
+def test_data_only_diagnostic_targets_exact_solution():
+    bm = get_benchmark("FE-D-M1"); ref = bm.reference("exact")
+    s = PaperEpochSampler(bm, ref.u0, SamplerCfg(n_per_term=64, mini_batch=32), "data_only", 0,
+                          torch.float64, data_fn=ref.u)
+    b = s.next_batch()
+    assert list(b) == ["d"]
+    x, t, g = (b["d"][k].numpy().ravel() for k in ("x", "t", "target"))
+    assert np.abs(g - ref.u(x, t)).max() < 1e-15 and t.max() > 0
+
+
+def test_data_only_and_tanh2_config_guards():
+    c = ExperimentConfig(); c.loss.grouping, c.loss.weighting = "data_only", "fixed"
+    c.validate()
+    c.loss.weighting = "ntk"
+    with pytest.raises(ValueError):
+        c.validate()
+    c = ExperimentConfig(); c.loss.hard_constraints, c.loss.grouping, c.loss.weighting = "ff_tanh2", "pde_only", "fixed"
+    c.validate()
+
+
+def test_existing_run_keys_unchanged():
+    import json
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1]
+    for name, rid in [("E4_hard_fourier", "E4_hard_fourier__s1234__705dd868f0"),
+                      ("E4b_hard_fourier_rc", "E4b_hard_fourier_rc__s1234__1490710f87")]:
+        c = ExperimentConfig.from_json(root / "results_optimization" / "configs" / f"{rid}.json")
+        assert c.run_id() == rid

@@ -25,8 +25,9 @@ def load(run_id):
     cfg = ExperimentConfig.from_dict(blob["config"])
     bm, refs, *_ = resolve_problem(cfg)
     model = build_model(cfg, bm).to(DTYPES[cfg.precision])
-    if cfg.loss.hard_constraints == "ff_tsq":
-        model = HardConstrainedFF(model, refs["exact"], bm.L, bm.t_end).to(DTYPES[cfg.precision])
+    if cfg.loss.hard_constraints in ("ff_tsq", "ff_tanh2"):
+        from beampinn.training.trainer import build_hard
+        model = build_hard(model, cfg, bm, refs).to(DTYPES[cfg.precision])
     model.load_state_dict(blob["model"])
     return cfg, bm, refs, model, blob
 

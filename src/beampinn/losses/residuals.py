@@ -31,7 +31,7 @@ def term_residuals(model, batch, c2, gamma, pde_scale=1.0):
         s = b["spec"]
         x = b["x"].detach().clone().requires_grad_(s.kind in ("dx", "pde"))
         t = b["t"].detach().clone().requires_grad_(s.kind in ("dt", "pde"))
-        if s.kind == "value":
+        if s.kind in ("value", "data"):
             out[name] = model(x, t) - b["target"]
         elif s.kind == "dt":
             out[name] = d(model(x, t), t)

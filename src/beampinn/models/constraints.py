@@ -39,13 +39,31 @@ class FixedFixedModeShape(nn.Module):
 
 
 class HardConstrainedFF(nn.Module):
-    def __init__(self, net, case, L, T):
+    """time_factor 't2'    : g(t) = (t/T)^2                      (loss.hard_constraints = 'ff_tsq')
+       time_factor 'tanh2' : g(t) = tanh^2(omega_1 t)            (loss.hard_constraints = 'ff_tanh2')
+    omega_1 = (beta_1 L / L)^2 sqrt(c2): the beam's FUNDAMENTAL undamped frequency from the PDE
+    coefficient and the BC eigenproblem only (never from the solution); a declared problem-specific
+    prior. g(0) = 0 and g'(0) = 0 for both, so all six IC/BC conditions hold exactly (tests).
+    Motivation (measured): with (t/T)^2 the network must output N* -> -omega^2/2 ~ -8.4e3 near t = 0;
+    with tanh^2(omega_1 t) the required N* stays in [-1.9, -0.16] (phaseE_ansatz_conditioning.txt)."""
+
+    def __init__(self, net, case, L, T, time_factor="t2", omega_1=None):
         super().__init__()
         self.net, self.u0 = net, FixedFixedModeShape(case)
         self.L, self.T, self.A0 = float(L), float(T), float(case.A0)
+        if time_factor not in ("t2", "tanh2"):
+            raise ValueError(time_factor)
+        if time_factor == "tanh2" and not omega_1:
+            raise ValueError("tanh2 needs omega_1")
+        self.time_factor, self.omega_1 = time_factor, float(omega_1 or 0.0)
+
+    def g(self, t):
+        if self.time_factor == "t2":
+            return (t / self.T) ** 2
+        return torch.tanh(self.omega_1 * t) ** 2
 
     def phi(self, x):
         return 16.0 * x ** 2 * (self.L - x) ** 2 / self.L ** 4
 
     def forward(self, x, t):
-        return self.u0(x) + (t / self.T) ** 2 * self.phi(x) * self.A0 * self.net(x, t)
+        return self.u0(x) + self.g(t) * self.phi(x) * self.A0 * self.net(x, t)

@@ -71,6 +71,12 @@ class Benchmark:
         return BeamCase(f"{self.benchmark_id}:{kind}", self.bc_type, self.mode, self.L,
                         self.t_end, c2, g, bl, self.A0)
 
+    def fundamental_omega(self, pde_coeffs: str = "paper_eq49"):
+        """omega_1 = (beta_1 L / L)^2 sqrt(c2): mode-1 undamped frequency of THIS beam and BCs,
+        from the PDE coefficient and the eigenproblem only (independent of mode and IC)."""
+        c2, _ = self.pde_coeffs(pde_coeffs)
+        return (eigen_root(self.bc_type, 1) / self.L) ** 2 * math.sqrt(c2)
+
     def references(self, pde_coeffs: str = "paper_eq49"):
         return {"paper": self.reference("paper"), "exact": self.reference("exact", pde_coeffs)}
 

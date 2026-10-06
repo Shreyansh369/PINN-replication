@@ -44,6 +44,8 @@ def term_specs(bc_type, grouping, n, ic_fraction_in_u=0.5):
         for k in sorted(k for k in ends_of if k > 0):
             specs.append(TermSpec(_DNAME[k], "dx", k, 0, tuple(ends_of[k])))
         specs.append(TermSpec("f", "pde"))
+    elif grouping == "data_only":         # DIAGNOSTIC: supervised fit of the exact solution
+        specs.append(TermSpec("d", "data"))
     elif grouping == "pde_only":          # hard constraints: IC/BC satisfied exactly by construction
         specs.append(TermSpec("f", "pde"))
     elif grouping == "split":
@@ -62,9 +64,10 @@ def term_specs(bc_type, grouping, n, ic_fraction_in_u=0.5):
 class PaperEpochSampler:
     """Draws `n` points per term each epoch and yields aligned mini-batches."""
 
-    def __init__(self, benchmark, ic_fn, scfg, grouping, seed, dtype=torch.float32):
+    def __init__(self, benchmark, ic_fn, scfg, grouping, seed, dtype=torch.float32, data_fn=None):
         self.L, self.T = benchmark.L, benchmark.t_end
         self.ic_fn = ic_fn                       # float64 numpy u0(x)
+        self.data_fn = data_fn                   # float64 numpy u(x, t) for the data diagnostic
         self.n, self.mb = scfg.n_per_term, scfg.mini_batch
         self.resample = scfg.resample
         self.specs = term_specs(benchmark.bc_type, grouping, self.n, scfg.ic_fraction_in_u)
@@ -98,6 +101,9 @@ class PaperEpochSampler:
                 else:
                     x, t = self._u(self.n) * self.L, self._u(self.n) * self.T
                 tgt = torch.zeros(self.n, 1, dtype=torch.float64)
+            elif s.kind == "data":
+                x, t = self._u(self.n) * self.L, self._u(self.n) * self.T
+                tgt = torch.from_numpy(self.data_fn(x.numpy(), t.numpy()))
             elif s.kind == "dt":
                 x, t = self._u(self.n) * self.L, torch.zeros(self.n, 1, dtype=torch.float64)
                 tgt = torch.zeros(self.n, 1, dtype=torch.float64)

@@ -46,6 +46,12 @@ def resolve_problem(cfg: ExperimentConfig):
     return bm, refs, c2, gamma, ic_ref.u0
 
 
+def build_hard(net, cfg, bm, refs):
+    tf = {"ff_tsq": "t2", "ff_tanh2": "tanh2"}[cfg.loss.hard_constraints]
+    return HardConstrainedFF(net, refs["exact"], bm.L, bm.t_end, time_factor=tf,
+                             omega_1=bm.fundamental_omega(cfg.benchmark.pde_coeffs))
+
+
 def setup_torch(cfg):
     torch.set_num_threads(cfg.threads)
     torch.set_default_dtype(DTYPES[cfg.precision])
@@ -60,13 +66,13 @@ class Trainer:
         setup_torch(cfg)
         self.bm, self.refs, self.c2, self.gamma, self.ic_fn = resolve_problem(cfg)
         self.model = build_model(cfg, self.bm).to(DTYPES[cfg.precision])
-        if cfg.loss.hard_constraints == "ff_tsq":
-            self.model = HardConstrainedFF(self.model, self.refs["exact"], self.bm.L,
-                                           self.bm.t_end).to(DTYPES[cfg.precision])
+        if cfg.loss.hard_constraints in ("ff_tsq", "ff_tanh2"):
+            self.model = build_hard(self.model, cfg, self.bm, self.refs).to(DTYPES[cfg.precision])
         self.params = [p for p in self.model.parameters() if p.requires_grad]
         self.opt, self.sched = build_optimizer(self.params, cfg.optim)
         self.sampler = PaperEpochSampler(self.bm, lambda x: self.ic_fn(x), cfg.sampler,
-                                         cfg.loss.grouping, cfg.seed, DTYPES[cfg.precision])
+                                         cfg.loss.grouping, cfg.seed, DTYPES[cfg.precision],
+                                         data_fn=self.refs["exact"].u)
         names = [s.name for s in self.sampler.specs]
         self.weighting = (NTKWeighting(names, cfg.loss.ntk) if cfg.loss.weighting == "ntk"
                           else FixedWeighting(names, cfg.loss.fixed_weights))

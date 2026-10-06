@@ -170,7 +170,7 @@ class ExperimentConfig:
         pending = {
             "sampler.adaptive=rar": self.sampler.adaptive == "rar",
             "loss.weighting=annealing/gradnorm": self.loss.weighting in ("annealing", "gradnorm"),
-            "loss.hard_constraints (unknown)": self.loss.hard_constraints not in ("none", "ff_tsq"),
+            "loss.hard_constraints (unknown)": self.loss.hard_constraints not in ("none", "ff_tsq", "ff_tanh2"),
             "loss.mixed_formulation": self.loss.mixed_formulation,
             "optim.lbfgs_steps": self.optim.lbfgs_steps > 0,
         }
@@ -181,7 +181,11 @@ class ExperimentConfig:
             raise NotImplementedError("temporal causal weighting is REJECTED (REPORT.md 5.3)")
         if self.loss.weighting not in ("ntk", "fixed"):
             raise ValueError(self.loss.weighting)
-        if self.loss.hard_constraints == "ff_tsq":
+        if self.loss.grouping == "data_only":      # DIAGNOSTIC ONLY (uses the solution as data)
+            if (self.loss.hard_constraints != "none" or self.loss.weighting != "fixed"
+                    or self.sampler.adaptive != "none"):
+                raise ValueError("data_only diagnostic: no hard constraints, NTK or RAD")
+        if self.loss.hard_constraints in ("ff_tsq", "ff_tanh2"):
             if bm.bc_type != "fixed-fixed" or self.benchmark.ic_shape != "exact":
                 raise ValueError("ff_tsq needs a fixed-fixed beam and the exact-root IC shape")
             if self.loss.grouping != "pde_only" or self.loss.weighting != "fixed":

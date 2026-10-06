@@ -36,8 +36,9 @@ def report(run_id):
     from beampinn.models.constraints import HardConstrainedFF
     bm, refs, c2, g, _ = resolve_problem(cfg)
     model = build_model(cfg, bm).to(DTYPES[cfg.precision])
-    if cfg.loss.hard_constraints == "ff_tsq":
-        model = HardConstrainedFF(model, refs["exact"], bm.L, bm.t_end).to(DTYPES[cfg.precision])
+    if cfg.loss.hard_constraints in ("ff_tsq", "ff_tanh2"):
+        from beampinn.training.trainer import build_hard
+        model = build_hard(model, cfg, bm, refs).to(DTYPES[cfg.precision])
     model.load_state_dict(blob["model"])
     ref = refs["exact"]
     t = np.linspace(0, bm.t_end, 2001)
