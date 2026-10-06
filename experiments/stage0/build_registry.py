@@ -24,7 +24,7 @@ row(benchmark_id="FE-D-M1", beam_type="fixed-fixed", boundary_conditions="u=u_x=
     paper_batch_size="640 per term (N_u=N_ut=N_ux=N_f, Eq.48)", paper_minibatch_size="32", paper_epochs="45000",
     paper_error="4.64e-4", paper_RMSE="1.36e-3 (vs Abaqus FEA at mid-span, m)", paper_frequency_error="NS (Wn=20.594 Hz; computed 20.5889)",
     paper_source="Sec.5.1.1, Eq.49, Fig.5, Table 3, Table 4 #12, Table 5, Fig.6",
-    notes="PROPOSED CANONICAL. Same number appears in Table 4 #12, Table 5 and Fig.6 (mb=32).", **STEEL)
+    notes="CANONICAL (approved). Same number in Table 4 #12, Table 5, Fig.6 (mb=32). DUAL REFERENCE: paper-faithful = Eq.28 with beta1*l=4.7300, c2=43.73^2, gamma=7.08 (primary gate); exact-physics = exact root 4.730040745, same coefficients. Exact solution scores L2_paper=4.386e-4 (94.5% of target) - see results_optimization/tables/stage01_reference_comparison.csv", **STEEL)
 for name, err in [("FCNN", "1.00"), ("vanilla-PINN", "1.11"), ("PINN+NTK", "8.81e-1"), ("PINN+NTK+Fourier", "4.64e-4")]:
     row(benchmark_id=f"FE-D-M1/T5-{name}", beam_type="fixed-fixed", paper_architecture=name, paper_error=err,
         paper_source="Table 5", notes="Method ladder on FE-D-M1; per-method hyperparameters NS")

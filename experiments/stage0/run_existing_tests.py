@@ -1,4 +1,8 @@
 """Execute the notebook's non-training cells (setup, physics, unit tests) in an isolated cwd."""
+import os, tempfile
+# The legacy notebook cells write figures/tables relative to the CWD ("results/..."). Always run
+# them inside a throw-away directory so the committed legacy results/ tree can never be touched.
+os.chdir(tempfile.mkdtemp(prefix="legacy_cells_"))
 import sys, os, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "notebook_src"))

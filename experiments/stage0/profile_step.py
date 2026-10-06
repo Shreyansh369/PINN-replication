@@ -1,5 +1,9 @@
 """Timing profile of the existing loss (fwd+bwd, NO optimizer step) and of an exact
 separable forward-mode derivative alternative. Nothing is trained; no results/ writes."""
+import os, tempfile
+# The legacy notebook cells write figures/tables relative to the CWD ("results/..."). Always run
+# them inside a throw-away directory so the committed legacy results/ tree can never be touched.
+os.chdir(tempfile.mkdtemp(prefix="legacy_cells_"))
 import sys, time, math, io, contextlib
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "notebook_src"))
