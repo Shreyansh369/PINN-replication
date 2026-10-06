@@ -178,3 +178,13 @@ def test_existing_run_keys_unchanged():
                       ("E4b_hard_fourier_rc", "E4b_hard_fourier_rc__s1234__1490710f87")]:
         c = ExperimentConfig.from_json(root / "results_optimization" / "configs" / f"{rid}.json")
         assert c.run_id() == rid
+
+
+def test_snapshot_every_saves_steps_and_does_not_change_key(tmp_path):
+    c = _cfg(hard=True, rad=False, steps=4)
+    k0 = c.key()
+    c.train.snapshot_every = 2
+    assert c.key() == k0
+    tr = Trainer(c, root=tmp_path); tr.run(final_eval=False)
+    d = tmp_path / "checkpoints" / c.run_id()
+    assert (d / "step_2.pt").exists() and (d / "step_4.pt").exists()

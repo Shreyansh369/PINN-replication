@@ -111,6 +111,7 @@ class TrainCfg:
     log_every: int = 500
     eval_every: int = 2000
     ckpt_every: int = 10000
+    snapshot_every: Optional[int] = None   # keep step_<N>.pt every N steps (analysis only)
     log_grad_norms: bool = True
 
 
@@ -154,8 +155,8 @@ class ExperimentConfig:
         """Hash of every field that affects the result (labels and logging cadence excluded)."""
         d = self.to_dict()
         d.pop("name"); d.pop("notes")
-        for k in ("log_every", "eval_every", "ckpt_every", "budget_label"):
-            d["train"].pop(k)
+        for k in ("log_every", "eval_every", "ckpt_every", "budget_label", "snapshot_every"):
+            d["train"].pop(k, None)
         return hashlib.md5(json.dumps(d, sort_keys=True, default=str).encode()).hexdigest()[:10]
 
     def run_id(self):

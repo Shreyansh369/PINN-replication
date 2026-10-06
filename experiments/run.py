@@ -30,6 +30,7 @@ def main():
     ap.add_argument("--log-every", type=int)
     ap.add_argument("--eval-every", type=int)
     ap.add_argument("--ckpt-every", type=int)
+    ap.add_argument("--snapshot-every", type=int)
     ap.add_argument("--no-leaderboard", action="store_true", help="sanity runs: do not rank")
     ap.add_argument("--dry-run", action="store_true", help="validate and print the plan only")
     a = ap.parse_args()
@@ -39,7 +40,7 @@ def main():
     cfg.train.max_steps, cfg.train.budget_label = BUDGETS[a.budget], a.budget
     if a.threads is not None:
         cfg.threads = a.threads
-    for k in ("log_every", "eval_every", "ckpt_every"):       # cadence only; not in the run key
+    for k in ("log_every", "eval_every", "ckpt_every", "snapshot_every"):       # cadence only; not in the run key
         if getattr(a, k) is not None:
             setattr(cfg.train, k, getattr(a, k))
     cfg.validate()

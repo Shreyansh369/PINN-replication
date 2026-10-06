@@ -209,6 +209,8 @@ class Trainer:
                 self.history.append(row)
             if self.step % cfg.train.ckpt_every == 0:
                 self._snapshot()
+            if cfg.train.snapshot_every and self.step % cfg.train.snapshot_every == 0:
+                self.save(f"step_{self.step}.pt")             # analysis snapshot, no effect on training
             if (stop_at_step is not None and self.step >= stop_at_step and not last) or \
                (max_wall_seconds is not None and time.perf_counter() - seg_start > max_wall_seconds):
                 self.status = "interrupted"
