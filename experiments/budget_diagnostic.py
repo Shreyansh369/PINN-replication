@@ -94,7 +94,7 @@ def checkpoint_row(run_id, fname, h):
     return row, traces
 
 
-def main(run_id, compare):
+def main(run_id, compare, tag="phaseY1_20K"):
     import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
     torch.set_num_threads(4)
     h = list(csv.DictReader(open(RO / "logs" / run_id / "history.csv")))
@@ -114,7 +114,7 @@ def main(run_id, compare):
         cmp_rows.append(r)
         print(f"compare {r['run']:16s} step {r['step']} mb {r['mini_batch']}: L2e {r['L2_exact']:.3f} PDE {r['PDE_residual_rel']:.3f} "
               f"collapse {r['collapse_time_s']:.3f}s ({r['persistence_cycles']:.1f} cyc) t {r['train_seconds_cum']:.0f}s pde {r['pde_evaluations_cum']:.0f}")
-    with open(RO / "tables" / "phaseY1_20K_checkpoints.csv", "w", newline="") as f:
+    with open(RO / "tables" / f"{tag}_checkpoints.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows + cmp_rows)
 
     # Figures 1-2: displacement / velocity small multiples (exact behind each checkpoint)
@@ -130,14 +130,14 @@ def main(run_id, compare):
             ax.text(tc + 0.005, ax.get_ylim()[1] * 0.7, f"collapse {tc:.3f} s", fontsize=7, color=INK)
             ax.set_ylabel(unit, fontsize=8); ax.legend(fontsize=7, frameon=False, loc="upper right")
         axes[-1].set_xlabel("t [s]", fontsize=8)
-        fig.suptitle(f"Y1-20K: mid-span {kind} at checkpoints (dashed line: amplitude ratio < 0.5)", fontsize=10, color=INK)
-        fig.tight_layout(); fig.savefig(RO / "figures" / f"phaseY1_20K_{fname}_traces.png", dpi=150, facecolor=BG); plt.close(fig)
+        fig.suptitle(f"{rows[0]['run']}: mid-span {kind} at checkpoints (dashed line: amplitude ratio < 0.5)", fontsize=10, color=INK)
+        fig.tight_layout(); fig.savefig(RO / "figures" / f"{tag}_{fname}_traces.png", dpi=150, facecolor=BG); plt.close(fig)
 
     # Figure 3: collapse time vs steps (+ comparison points)
     fig, ax = plt.subplots(figsize=(7, 4), facecolor=BG); style(ax)
     st = [r["step"] for r in rows]; ct = [r["collapse_time_s"] for r in rows]
     ax.plot(st, ct, "-o", color=STEP_COLORS[0], lw=2, ms=6)
-    ax.annotate("Y1-20K (mb 32)", (st[-1], ct[-1]), xytext=(6, 0), textcoords="offset points", fontsize=8, color=INK)
+    ax.annotate(f"{rows[0]['run']} (mb {rows[0]['mini_batch']})", (st[-1], ct[-1]), xytext=(6, 0), textcoords="offset points", fontsize=8, color=INK)
     for r, mk in zip(cmp_rows, ("s", "D", "^", "v")):
         ax.plot([r["step"]], [r["collapse_time_s"]], mk, color=MUTED, ms=7)
         ax.annotate(f"{r['run']} (mb {r['mini_batch']})", (r["step"], r["collapse_time_s"]), xytext=(6, -2),
@@ -145,7 +145,7 @@ def main(run_id, compare):
     ax.axhline(1.0, color=INK, lw=1, ls=":"); ax.text(500, 0.96, "full window (20.6 cycles)", fontsize=7, color=MUTED, va="top")
     ax.set_xlabel("optimizer steps", fontsize=8); ax.set_ylabel("collapse time [s] (amplitude ratio < 0.5)", fontsize=8)
     ax.set_ylim(0, 1.05)
-    fig.tight_layout(); fig.savefig(RO / "figures" / "phaseY1_20K_collapse_vs_steps.png", dpi=150, facecolor=BG); plt.close(fig)
+    fig.tight_layout(); fig.savefig(RO / "figures" / f"{tag}_collapse_vs_steps_raw.png", dpi=150, facecolor=BG); plt.close(fig)
 
     # Figures 4-5: loss history and validation L2 / PDE residual vs steps
     s_loss = np.array([(int(r["step"]), float(r["L_f"])) for r in h if r.get("L_f")])
@@ -158,11 +158,14 @@ def main(run_id, compare):
     axes[1].legend(fontsize=7, frameon=False)
     for a in axes:
         a.set_xlabel("optimizer steps", fontsize=8)
-    fig.tight_layout(); fig.savefig(RO / "figures" / "phaseY1_20K_loss_and_residual.png", dpi=150, facecolor=BG); plt.close(fig)
+    fig.tight_layout(); fig.savefig(RO / "figures" / f"{tag}_loss_and_residual.png", dpi=150, facecolor=BG); plt.close(fig)
     print("written")
 
 
 if __name__ == "__main__":
     a = sys.argv[1:]
+    tag = "phaseY1_20K"
+    if "--tag" in a:
+        i = a.index("--tag"); tag = a[i + 1]; a = a[:i] + a[i + 2:]
     cmp_ = a[a.index("--compare") + 1:] if "--compare" in a else []
-    main(a[0], cmp_)
+    main(a[0], cmp_, tag)
