@@ -168,9 +168,9 @@ class ExperimentConfig:
         if self.mode != bm.mode:
             raise ValueError(f"mode {self.mode} does not match benchmark mode {bm.mode}")
         pending = {
-            "sampler.adaptive": self.sampler.adaptive != "none",
+            "sampler.adaptive=rar": self.sampler.adaptive == "rar",
             "loss.weighting=annealing/gradnorm": self.loss.weighting in ("annealing", "gradnorm"),
-            "loss.hard_constraints": self.loss.hard_constraints != "none",
+            "loss.hard_constraints (unknown)": self.loss.hard_constraints not in ("none", "ff_tsq"),
             "loss.mixed_formulation": self.loss.mixed_formulation,
             "optim.lbfgs_steps": self.optim.lbfgs_steps > 0,
         }
@@ -181,6 +181,13 @@ class ExperimentConfig:
             raise NotImplementedError("temporal causal weighting is REJECTED (REPORT.md 5.3)")
         if self.loss.weighting not in ("ntk", "fixed"):
             raise ValueError(self.loss.weighting)
+        if self.loss.hard_constraints == "ff_tsq":
+            if bm.bc_type != "fixed-fixed" or self.benchmark.ic_shape != "exact":
+                raise ValueError("ff_tsq needs a fixed-fixed beam and the exact-root IC shape")
+            if self.loss.grouping != "pde_only" or self.loss.weighting != "fixed":
+                raise ValueError("ff_tsq: use grouping='pde_only' and weighting='fixed' (one loss term)")
+        if self.sampler.adaptive == "rad" and self.sampler.rad.every % self.steps_per_epoch():
+            raise ValueError("RAD 'every' must be a multiple of steps_per_epoch (epoch-aligned updates)")
         if self.sampler.n_per_term % self.sampler.mini_batch:
             raise ValueError("n_per_term must be a multiple of mini_batch")
         if self.model.input_norm not in ("physical", "unit", "standardize"):

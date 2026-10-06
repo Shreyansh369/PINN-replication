@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 from beampinn.config import ExperimentConfig  # noqa: E402
 
-BUDGETS = {"S0": 200, "S1": 20000, "S2": 100000, "PAPER": None}
+BUDGETS = {"S0": 200, "D5K": 5000, "S1": 20000, "S2": 100000, "PAPER": None}
 
 
 def main():

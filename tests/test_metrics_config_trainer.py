@@ -83,8 +83,8 @@ def test_config_roundtrip_and_key(tmp_path):
     assert e.key() != c.key()
 
 
-@pytest.mark.parametrize("path,val", [("sampler.adaptive", "rad"), ("loss.weighting", "annealing"),
-                                      ("loss.weighting", "gradnorm"), ("loss.hard_constraints", "ff_tsq"),
+@pytest.mark.parametrize("path,val", [("sampler.adaptive", "rar"), ("loss.weighting", "annealing"),
+                                      ("loss.weighting", "gradnorm"), ("loss.hard_constraints", "other"),
                                       ("loss.mixed_formulation", True), ("optim.lbfgs_steps", 10)])
 def test_unapproved_mechanisms_refuse_to_run(path, val):
     c = ExperimentConfig()

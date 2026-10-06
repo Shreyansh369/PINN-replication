@@ -44,6 +44,8 @@ def term_specs(bc_type, grouping, n, ic_fraction_in_u=0.5):
         for k in sorted(k for k in ends_of if k > 0):
             specs.append(TermSpec(_DNAME[k], "dx", k, 0, tuple(ends_of[k])))
         specs.append(TermSpec("f", "pde"))
+    elif grouping == "pde_only":          # hard constraints: IC/BC satisfied exactly by construction
+        specs.append(TermSpec("f", "pde"))
     elif grouping == "split":
         specs.append(TermSpec("ic_u", "value", 0, n, ()))
         specs.append(TermSpec("ic_ut", "dt"))
@@ -71,6 +73,7 @@ class PaperEpochSampler:
         self.epoch, self.pos = 0, 0
         self.data = None
         self.points_processed = {s.name: 0 for s in self.specs}
+        self.pde_pool = None                     # set by RAD; replaces the uniform PDE redraw
 
     @property
     def steps_per_epoch(self):
@@ -90,7 +93,10 @@ class PaperEpochSampler:
         data = {}
         for s in self.specs:
             if s.kind == "pde":
-                x, t = self._u(self.n) * self.L, self._u(self.n) * self.T
+                if self.pde_pool is not None:        # adaptive pool (reshuffled below)
+                    x, t = self.pde_pool
+                else:
+                    x, t = self._u(self.n) * self.L, self._u(self.n) * self.T
                 tgt = torch.zeros(self.n, 1, dtype=torch.float64)
             elif s.kind == "dt":
                 x, t = self._u(self.n) * self.L, torch.zeros(self.n, 1, dtype=torch.float64)
@@ -133,12 +139,19 @@ class PaperEpochSampler:
                 self.data = {k: tuple(a[perm[k]] for a in v) for k, v in self.data.items()}
         return batch
 
+    def set_pde_pool(self, x, t):
+        """Install an adaptive PDE point set (float64, shape (n,1)); used from the next epoch."""
+        assert x.shape == (self.n, 1) and t.shape == (self.n, 1)
+        self.pde_pool = (x.clone(), t.clone())
+
     # ---------------------------------------------------------------- state
     def state_dict(self):
         return {"gen": self.gen.get_state(), "epoch": self.epoch, "pos": self.pos,
-                "data": self.data, "points_processed": dict(self.points_processed)}
+                "data": self.data, "points_processed": dict(self.points_processed),
+                "pde_pool": self.pde_pool}
 
     def load_state_dict(self, st):
         self.gen.set_state(st["gen"])
         self.epoch, self.pos, self.data = st["epoch"], st["pos"], st["data"]
         self.points_processed = dict(st["points_processed"])
+        self.pde_pool = st.get("pde_pool")

@@ -27,6 +27,8 @@ from ..models.networks import build_model, count_parameters, model_size_bytes
 from ..optimization.optimizers import build_optimizer
 from ..physics.benchmarks import get_benchmark
 from ..profiling.resources import hardware_info, peak_rss_mb, peak_vram_mb, reset_peak_rss
+from ..models.constraints import HardConstrainedFF
+from ..sampling.rad import rad_update
 from ..sampling.samplers import PaperEpochSampler
 from ..utils.io import RESULTS, run_paths, save_checkpoint, write_history, write_json
 
@@ -58,6 +60,9 @@ class Trainer:
         setup_torch(cfg)
         self.bm, self.refs, self.c2, self.gamma, self.ic_fn = resolve_problem(cfg)
         self.model = build_model(cfg, self.bm).to(DTYPES[cfg.precision])
+        if cfg.loss.hard_constraints == "ff_tsq":
+            self.model = HardConstrainedFF(self.model, self.refs["exact"], self.bm.L,
+                                           self.bm.t_end).to(DTYPES[cfg.precision])
         self.params = [p for p in self.model.parameters() if p.requires_grad]
         self.opt, self.sched = build_optimizer(self.params, cfg.optim)
         self.sampler = PaperEpochSampler(self.bm, lambda x: self.ic_fn(x), cfg.sampler,
@@ -69,10 +74,12 @@ class Trainer:
         self.paths = run_paths(self.run_id, root)
         self.step = 0
         self.history = []
+        self.rad_snapshots = {}
         self.status = "initialised"
         self.acc = dict(optimizer_steps=0, training_points=0, pde_evaluations=0, grad_evaluations=0,
                         ntk_row_gradients=0, ntk_updates=0, ntk_seconds=0.0, diag_gradients=0,
-                        diag_seconds=0.0, candidate_evaluations=0, train_seconds=0.0,
+                        diag_seconds=0.0, candidate_evaluations=0, rad_updates=0, rad_seconds=0.0,
+                        train_seconds=0.0,
                         validation_seconds=0.0, peak_rss_mb=0.0, segments=0)
 
     # ----------------------------------------------------------- checkpoints
@@ -81,7 +88,7 @@ class Trainer:
                 "model": self.model.state_dict(), "opt": self.opt.state_dict(),
                 "sched": self.sched.state_dict(), "sampler": self.sampler.state_dict(),
                 "weighting": self.weighting.state_dict(), "acc": dict(self.acc),
-                "history": list(self.history), "status": self.status,
+                "history": list(self.history), "status": self.status, "rad_snapshots": self.rad_snapshots,
                 "torch_rng": torch.get_rng_state()}
 
     def save(self, name="latest.pt"):
@@ -98,6 +105,7 @@ class Trainer:
         self.sched.load_state_dict(blob["sched"]); self.sampler.load_state_dict(blob["sampler"])
         self.weighting.load_state_dict(blob["weighting"]); self.acc = blob["acc"]
         self.history = blob["history"]; self.step = blob["step"]; self.status = blob["status"]
+        self.rad_snapshots = blob.get("rad_snapshots", {})
         torch.set_rng_state(blob["torch_rng"])
         return True
 
@@ -161,7 +169,15 @@ class Trainer:
             log_now = self.step == 0 or (self.step + 1) % cfg.train.log_every == 0
             row = {} if log_now else None
             diag0, t0 = self.acc["diag_seconds"], time.perf_counter()
-            loss, parts = self.train_step(row)
+            if (cfg.sampler.adaptive == "rad" and self.step > 0 and self.sampler.pos == 0
+                    and self.step % cfg.sampler.rad.every == 0):
+                n_c, stats, pts = rad_update(self.model, self.sampler, self.c2, self.gamma,
+                                             cfg.sampler.rad, DTYPES[cfg.precision])
+                self.acc["candidate_evaluations"] += n_c
+                self.acc["rad_updates"] += 1
+                self.acc["rad_seconds"] += stats["rad_seconds_update"]
+                self.history.append({"step": self.step, **stats})
+                self.rad_snapshots[self.step] = pts
             # gradient-norm logging is diagnostic, not training cost: exclude its time
             self.acc["train_seconds"] += time.perf_counter() - t0 - (self.acc["diag_seconds"] - diag0)
             if loss is None:

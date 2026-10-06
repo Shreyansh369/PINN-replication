@@ -58,7 +58,8 @@ class Benchmark:
     def reference(self, kind: str, pde_coeffs: str = "paper_eq49") -> BeamCase:
         if kind == "paper":
             c2, g = self.pde_coeffs("paper_eq49")
-            bl = self.beta_l_printed
+            # no printed root (e.g. mode 2): the paper-style reference is the exact root
+            bl = self.beta_l_printed if self.beta_l_printed is not None else eigen_root(self.bc_type, self.mode)
         elif kind == "exact":
             c2, g = self.pde_coeffs(pde_coeffs)
             bl = eigen_root(self.bc_type, self.mode)
@@ -82,6 +83,11 @@ BENCHMARKS = {
     "FE-D-M1": Benchmark("FE-D-M1", "fixed-fixed", 1, 2.75, 1.0, 50.0, 7.08, 4.7300, 0.08,
                          4.64e-4, "Sec. 5.1.1, Eq. 49, Eq. 28, Fig. 5, Table 4 #12, Table 5, Fig. 6",
                          _FE_HYPER, "A0 = 0.08 m read from Fig. 5(c); rel-L2 is amplitude-invariant"),
+    # Mode-2 HIGHER-FREQUENCY STRESS TEST (approved): identical to FE-D-M1 except mode = 2.
+    # The paper publishes NO mode-2 result: paper_L2 is NaN and must never be quoted as a target.
+    "FE-D-M2": Benchmark("FE-D-M2", "fixed-fixed", 2, 2.75, 1.0, 50.0, 7.08, None, 0.08,
+                         float("nan"), "derived from FE-D-M1 (mode 2); no published target", _FE_HYPER,
+                         "A0 at the mode-2 antinode; 'paper' reference = exact root (none printed)"),
     "FE-U-M1": Benchmark("FE-U-M1", "fixed-fixed", 1, 2.75, 1.0, 0.0, 0.0, 4.7300, 0.08,
                          2.70e-3, "Sec. 5.1.1, Eq. 46, Fig. 4", _FE_HYPER),
     # Secondary replication cases (later stages only).

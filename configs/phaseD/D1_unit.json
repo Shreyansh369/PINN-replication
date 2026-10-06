@@ -1,0 +1,95 @@
+{
+  "name": "D1_unit",
+  "seed": 1234,
+  "mode": 1,
+  "precision": "float32",
+  "device": "cpu",
+  "threads": 1,
+  "benchmark": {
+    "benchmark_id": "FE-D-M1",
+    "pde_coeffs": "paper_eq49",
+    "ic_shape": "exact",
+    "amplitude": null
+  },
+  "model": {
+    "arch": "st_fourier",
+    "depth": 6,
+    "width": 200,
+    "activation": "tanh",
+    "m_fourier": 100,
+    "sigma_x": [
+      1.0
+    ],
+    "sigma_t": [
+      10.0,
+      1.0
+    ],
+    "two_pi": true,
+    "input_norm": "unit",
+    "output_scale": 1.0,
+    "weight_init": "xavier_normal",
+    "bias_init": "normal"
+  },
+  "sampler": {
+    "kind": "paper_epoch",
+    "n_per_term": 640,
+    "mini_batch": 32,
+    "resample": "epoch",
+    "ic_fraction_in_u": 0.5,
+    "adaptive": "none",
+    "rad": {
+      "k": 1.0,
+      "c": 1.0,
+      "every": 1000,
+      "n_candidates": 10000
+    },
+    "rar": {
+      "every": 1000,
+      "n_candidates": 10000,
+      "n_add": 32,
+      "k": 2.0,
+      "c": 0.0
+    }
+  },
+  "loss": {
+    "grouping": "paper",
+    "reduction": "half_mean",
+    "pde_scale": 1.0,
+    "weighting": "ntk",
+    "fixed_weights": {},
+    "ntk": {
+      "every": 100,
+      "ema": 1.0,
+      "trace_norm": "mean",
+      "max_rows": 32
+    },
+    "hard_constraints": "none",
+    "mixed_formulation": false,
+    "causal": false
+  },
+  "optim": {
+    "name": "adam",
+    "lr": 0.0001,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.0,
+    "schedule": "constant",
+    "decay_rate": 0.9,
+    "decay_steps": 1000,
+    "grad_clip": null,
+    "lbfgs_steps": 0
+  },
+  "train": {
+    "epochs": 45000,
+    "max_steps": null,
+    "budget_label": "PAPER",
+    "log_every": 500,
+    "eval_every": 2000,
+    "ckpt_every": 10000,
+    "log_grad_norms": true
+  },
+  "notes": "BASELINE-REPAIR DIAGNOSTIC (not a method): C0 with {'input_norm': 'unit'}"
+}

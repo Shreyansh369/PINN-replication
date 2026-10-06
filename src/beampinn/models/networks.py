@@ -125,6 +125,10 @@ def build_model(cfg, benchmark):
     return cls(m, benchmark.L, benchmark.t_end, cfg.seed)
 
 
+def unwrap(model):
+    return getattr(model, "net", model)
+
+
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
