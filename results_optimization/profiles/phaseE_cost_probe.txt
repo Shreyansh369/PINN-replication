@@ -1,0 +1,2 @@
+hard 6x200 mb32 (1 thread): 53.6 ms/step
+RAD sweep 5000 candidates: 1.92 s

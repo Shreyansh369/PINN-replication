@@ -178,6 +178,7 @@ class Trainer:
                 self.acc["rad_seconds"] += stats["rad_seconds_update"]
                 self.history.append({"step": self.step, **stats})
                 self.rad_snapshots[self.step] = pts
+            loss, parts = self.train_step(row)
             # gradient-norm logging is diagnostic, not training cost: exclude its time
             self.acc["train_seconds"] += time.perf_counter() - t0 - (self.acc["diag_seconds"] - diag0)
             if loss is None:
