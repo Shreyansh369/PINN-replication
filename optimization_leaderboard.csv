@@ -1,0 +1,1 @@
+run_id,benchmark_id,method,seed,mode,L2,RMSE,frequency_error,phase_error,amplitude_error,PDE_residual,IC_error,BC_error,optimizer_steps,training_points,PDE_evaluations,candidate_evaluations,wall_time,peak_RAM,peak_VRAM,parameters,model_size,inference_latency,device,precision,status,notes

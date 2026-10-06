@@ -1,0 +1,33 @@
+EI=13500.0000  rhoA=7.060500  c^2=EI/rhoA=1912.0459  c=43.72695  paper c^2=43.73^2=1912.3129
+fixed-fixed  beta1*l exact=4.730040745 paper=4.73  w1=129.3640 rad/s  f1=20.5889 Hz (paper 20.594)  cycles in [0,1]s=20.59
+      b=  0.0 gamma=b/rhoA=0.0000  zeta=gamma/(2w)=0.00000  envelope at t=1: 1.0000
+      b= 50.0 gamma=b/rhoA=7.0817  zeta=gamma/(2w)=0.02737  envelope at t=1: 0.0290
+      b=  5.0 gamma=b/rhoA=0.7082  zeta=gamma/(2w)=0.00274  envelope at t=1: 0.7018
+simply-supp  beta1*l exact=3.141592654 paper=3.1416  w1=57.0668 rad/s  f1=9.0825 Hz (paper 9.085)  cycles in [0,1]s=9.08
+      b=  0.0 gamma=b/rhoA=0.0000  zeta=gamma/(2w)=0.00000  envelope at t=1: 1.0000
+      b= 50.0 gamma=b/rhoA=7.0817  zeta=gamma/(2w)=0.06205  envelope at t=1: 0.0290
+      b=  5.0 gamma=b/rhoA=0.7082  zeta=gamma/(2w)=0.00620  envelope at t=1: 0.7018
+cantilever   beta1*l exact=1.875104069 paper=1.8751  w1=9.6090 rad/s  f1=1.5293 Hz (paper 1.529)  cycles in [0,1]s=1.53
+      b=  0.0 gamma=b/rhoA=0.0000  zeta=gamma/(2w)=0.00000  envelope at t=1: 1.0000
+      b= 50.0 gamma=b/rhoA=7.0817  zeta=gamma/(2w)=0.36849  envelope at t=1: 0.0290
+      b=  5.0 gamma=b/rhoA=0.7082  zeta=gamma/(2w)=0.03685  envelope at t=1: 0.7018
+
+L2 FLOOR from a reference/PDE frequency mismatch (rel-L2 between q(w) and q(w(1+d)) on t in [0,T]):
+   FE undamped     beta1l 4.7300 vs exact       d=-1.723e-05  -> rel-L2 floor 1.28e-03
+   FE undamped     c^2 = 43.73^2 vs EI/rhoA     d=+6.982e-05  -> rel-L2 floor 5.18e-03
+   FE undamped     paper f1 table vs computed   d=+2.623e-04  -> rel-L2 floor 1.95e-02
+   FE damped b=50  beta1l 4.7300 vs exact       d=-1.723e-05  -> rel-L2 floor 4.39e-04
+   FE damped b=50  c^2 = 43.73^2 vs EI/rhoA     d=+6.982e-05  -> rel-L2 floor 1.78e-03
+   FE damped b=50  paper f1 table vs computed   d=+2.623e-04  -> rel-L2 floor 6.68e-03
+   SS undamped     c^2 = 43.73^2 vs EI/rhoA     d=+6.982e-05  -> rel-L2 floor 2.27e-03
+   SS undamped     paper f1 table vs computed   d=+2.753e-04  -> rel-L2 floor 8.93e-03
+   SS damped b=50  c^2 = 43.73^2 vs EI/rhoA     d=+6.982e-05  -> rel-L2 floor 7.85e-04
+   SS damped b=50  paper f1 table vs computed   d=+2.753e-04  -> rel-L2 floor 3.09e-03
+
+Modal content of the paper's static-deflection ICs (fraction of ||u0||_2 NOT in mode 1):
+   fixed-fixed Eq.27: residual fraction 3.075e-02;  mode-1 amplitude ratio mid-span = 0.96744
+   simply-supp A.2: residual fraction 1.246e-02
+
+   FE mode shape float32 cancellation: cosh(beta*L)=56.65; |U1|max=1.5881
+   max |U1_float32 - U1_float64| / |U1|max = 5.60e-06  (at x=L should be 0)
+   U1_float32(L) = 0.000e+00
