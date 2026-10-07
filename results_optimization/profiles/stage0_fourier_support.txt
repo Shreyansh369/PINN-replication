@@ -1,0 +1,8 @@
+convention                                 sigma s_eff [rad/s]   FE mode 1 (20.59 Hz)    SS mode 1 (9.08 Hz)    FE mode 2 (56.7 Hz)    CF mode 1 (1.53 Hz)
+paper Eq.38-39 (2*pi*B*t, t in [0,1] s)        1          6.28  20.59sd,   0.00 feats   9.08sd,   0.00 feats  56.75sd,   0.00 feats   1.53sd,  12.62 feats
+paper Eq.38-39 (2*pi*B*t, t in [0,1] s)       10         62.83   2.06sd,   3.95 feats   0.91sd,  36.37 feats   5.68sd,   0.00 feats   0.15sd,  87.85 feats
+reference code (B*(t-mu)/sd)                   1          3.46  37.34sd,   0.00 feats  16.47sd,   0.00 feats 102.94sd,   0.00 feats   2.77sd,   0.55 feats
+reference code (B*(t-mu)/sd)                  10         34.64   3.73sd,   0.02 feats   1.65sd,   9.95 feats  10.29sd,   0.00 feats   0.28sd,  78.15 feats
+this repo (B*t*, t* in [0,1])                  1          1.00 129.36sd,   0.00 feats  57.07sd,   0.00 feats 356.60sd,   0.00 feats   9.61sd,   0.00 feats
+this repo (B*t*, t* in [0,1])                 10         10.00  12.94sd,   0.00 feats   5.71sd,   0.00 feats  35.66sd,   0.00 feats   0.96sd,  33.66 feats
+(m = 100 features per mapping; 'feats' = expected count with |angular freq| > target)

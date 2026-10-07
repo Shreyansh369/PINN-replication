@@ -1,0 +1,2 @@
+run_id C0_paper__s1234__c41ccb1cdf | S1: 20,000 steps x mini-batch 32 = 640,000 PDE evaluations
+status: completed

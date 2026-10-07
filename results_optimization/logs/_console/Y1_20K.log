@@ -1,0 +1,2 @@
+run_id Y1_20K__s1234__36f2d370bf | S1: 20,000 steps x mini-batch 32 = 640,000 PDE evaluations
+status: completed

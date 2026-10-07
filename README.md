@@ -8,7 +8,13 @@ Replication study and controlled optimization experiment for:
 > **Engineering Applications of Artificial Intelligence 141 (2025) 109804**.
 > DOI: [10.1016/j.engappai.2024.109804](https://doi.org/10.1016/j.engappai.2024.109804)
 
-**Start here:**
+**Optimization study (new, `src/beampinn/`, `results_optimization/`):** see
+[STAGE0_AUDIT.md](results_optimization/reports/STAGE0_AUDIT.md),
+[STAGE01_CORRECTIONS.md](results_optimization/reports/STAGE01_CORRECTIONS.md) and
+[CONVENTIONS.md](results_optimization/reports/CONVENTIONS.md). Tests: `python -m pytest tests/`.
+The legacy notebook and `results/` below are preserved unchanged.
+
+**Start here (legacy replication study):**
 
 | Document | What it is |
 |---|---|

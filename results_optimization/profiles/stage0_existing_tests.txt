@@ -1,0 +1,36 @@
+==========================================================================
+==========================================================================
+==========================================================================
+  [PASS] 1. omega_1 matches beta_n^2 sqrt(EI/rhoA)   57.066799 rad/s
+  [PASS] 1. omega_2 matches beta_n^2 sqrt(EI/rhoA)   228.267196 rad/s
+  [PASS] 1. omega_3 matches beta_n^2 sqrt(EI/rhoA)   513.601192 rad/s
+  [PASS] 1. omega_4 matches beta_n^2 sqrt(EI/rhoA)   913.068785 rad/s
+  [PASS] 1b. alpha equals 4/pi^2 (normalization identity)   alpha=0.405284734569
+  [PASS] 1c. omega*_n equals 2 pi n^2
+  [PASS] 2. u(0,t)=u(L,t)=0 for mode 1
+  [PASS] 2b. u_xx(0,t)=u_xx(L,t)=0 for mode 1
+  [PASS] 2. u(0,t)=u(L,t)=0 for mode 2
+  [PASS] 2b. u_xx(0,t)=u_xx(L,t)=0 for mode 2
+  [PASS] 2. u(0,t)=u(L,t)=0 for mode 3
+  [PASS] 2b. u_xx(0,t)=u_xx(L,t)=0 for mode 3
+  [PASS] 3. u(x,0)=sin(1 pi x)
+  [PASS] 3b. u_t(x,0)=0 for mode 1
+  [PASS] 3. u(x,0)=sin(2 pi x)
+  [PASS] 3b. u_t(x,0)=0 for mode 2
+  [PASS] 3. u(x,0)=sin(3 pi x)
+  [PASS] 3b. u_t(x,0)=0 for mode 3
+  [PASS] 4. analytical PDE residual ~ 0 for mode 1   max|r|/|u_tt|max = 3.60e-16
+  [PASS] 4. analytical PDE residual ~ 0 for mode 2   max|r|/|u_tt|max = 3.60e-16
+  [PASS] 4. analytical PDE residual ~ 0 for mode 3   max|r|/|u_tt|max = 5.69e-16
+  [PASS] 4. analytical PDE residual ~ 0 for mode 5   max|r|/|u_tt|max = 2.95e-16
+  [PASS] 5. autograd derivative shapes
+  [PASS] 5b. autograd u_xxxx matches analytical u_xxxx   rel err 1.48e-06  (float32, 4th order)
+  [PASS] 5c. autograd u_tt matches analytical u_tt   rel err 1.45e-06
+  [PASS] 10. float32 is adequate for the 4th derivative   float32 err 1.96e-06 << target accuracy (~1e-2 rel L2)
+  [PASS] 9. seeding is deterministic (torch + numpy)
+  [PASS] 11. NTK row-subsample estimator is accurate to <15% on all terms   worst term 7.2%
+  [PASS] 12. eps=0 recovers the unweighted PDE loss EXACTLY   causal=9.57081094e-03 vs plain=9.57080908e-03  (rel diff 1.95e-07)
+  [PASS] 12b. eps calibration hits the requested minimum weight   w_min achieved = 0.1000
+  [PASS] 13. causal weights are non-increasing in time
+  [PASS] 14. causal weights are finite and in (0,1]
+=== all 32 checks passed; 11.0s ===

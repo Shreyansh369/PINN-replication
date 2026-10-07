@@ -1,0 +1,21 @@
+FE-D-M1 mid-span trace, exact wd = 129.324620 rad/s, 200 trials per cell
+noise-free: freq 0.00e+00 phase 0.00e+00 amp 0.00e+00 damping 0.00e+00
+  white    eps=1.00e-05  freq med 8.61e-09 p95 2.53e-08 | phase p95 6.50e-07 rad | amp p95 6.52e-07 | damp p95 8.73e-07 | formal se med 1.26e-08
+  white    eps=1.00e-04  freq med 9.59e-08 p95 2.76e-07 | phase p95 6.86e-06 rad | amp p95 5.68e-06 | damp p95 8.42e-06 | formal se med 1.26e-07
+  white    eps=2.50e-04  freq med 2.44e-07 p95 5.99e-07 | phase p95 1.62e-05 rad | amp p95 1.47e-05 | damp p95 2.30e-05 | formal se med 3.15e-07
+  white    eps=4.64e-04  freq med 4.07e-07 p95 1.19e-06 | phase p95 3.03e-05 rad | amp p95 2.65e-05 | damp p95 4.28e-05 | formal se med 5.84e-07
+  white    eps=1.00e-03  freq med 7.96e-07 p95 2.63e-06 | phase p95 5.92e-05 rad | amp p95 6.21e-05 | damp p95 9.05e-05 | formal se med 1.26e-06
+  white    eps=1.00e-02  freq med 1.01e-05 p95 2.73e-05 | phase p95 6.29e-04 rad | amp p95 6.70e-04 | damp p95 9.08e-04 | formal se med 1.26e-05
+  smooth   eps=1.00e-05  freq med 3.93e-08 p95 1.17e-07 | phase p95 5.28e-06 rad | amp p95 6.65e-06 | damp p95 4.93e-06 | formal se med 1.23e-08
+  smooth   eps=1.00e-04  freq med 4.27e-07 p95 1.52e-06 | phase p95 5.74e-05 rad | amp p95 6.22e-05 | damp p95 4.89e-05 | formal se med 1.23e-07
+  smooth   eps=2.50e-04  freq med 7.92e-07 p95 3.75e-06 | phase p95 1.69e-04 rad | amp p95 1.08e-04 | damp p95 1.09e-04 | formal se med 3.09e-07
+  smooth   eps=4.64e-04  freq med 1.59e-06 p95 6.86e-06 | phase p95 2.80e-04 rad | amp p95 2.22e-04 | damp p95 1.99e-04 | formal se med 5.74e-07
+  smooth   eps=1.00e-03  freq med 3.53e-06 p95 1.48e-05 | phase p95 6.34e-04 rad | amp p95 5.79e-04 | damp p95 4.71e-04 | formal se med 1.24e-06
+  smooth   eps=1.00e-02  freq med 3.86e-05 p95 1.31e-04 | phase p95 5.47e-03 rad | amp p95 6.05e-03 | damp p95 5.63e-03 | formal se med 1.23e-05
+  envelope eps=1.00e-05  freq med 1.28e-07 p95 3.05e-07 | phase p95 1.18e-05 rad | amp p95 1.18e-05 | damp p95 1.14e-05 | formal se med 6.01e-09
+  envelope eps=1.00e-04  freq med 1.43e-06 p95 3.26e-06 | phase p95 1.19e-04 rad | amp p95 1.19e-04 | damp p95 1.18e-04 | formal se med 5.89e-08
+  envelope eps=2.50e-04  freq med 3.42e-06 p95 8.18e-06 | phase p95 2.91e-04 rad | amp p95 3.03e-04 | damp p95 2.89e-04 | formal se med 1.43e-07
+  envelope eps=4.64e-04  freq med 6.03e-06 p95 1.42e-05 | phase p95 5.32e-04 rad | amp p95 5.50e-04 | damp p95 5.44e-04 | formal se med 2.74e-07
+  envelope eps=1.00e-03  freq med 1.42e-05 p95 3.05e-05 | phase p95 1.17e-03 rad | amp p95 1.15e-03 | damp p95 1.03e-03 | formal se med 5.74e-07
+  envelope eps=1.00e-02  freq med 1.37e-04 p95 3.09e-04 | phase p95 1.22e-02 rad | amp p95 1.15e-02 | damp p95 1.11e-02 | formal se med 5.96e-06
+wrote /home/user/PINN-replication/results_optimization/tables/stage01_frequency_extractor_uncertainty.csv

@@ -1,0 +1,2 @@
+run_id X3_supervised_paperconv__s1234__91c8cb1355 | X5K: 5,000 steps x mini-batch 32 = 160,000 PDE evaluations
+status: completed

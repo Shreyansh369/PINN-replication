@@ -1,0 +1,30 @@
+References (FE-D-M1):
+  paper     c2=1912.3129 gamma=7.08000 beta1*l=4.730000000 f1=20.590007 Hz  wd=129.322390 rad/s
+  exact     c2=1912.3129 gamma=7.08000 beta1*l=4.730040745 f1=20.590362 Hz  wd=129.324620 rad/s
+  material  c2=1912.0459 gamma=7.08165 beta1*l=4.730040745 f1=20.588925 Hz  wd=129.315561 rad/s
+
+Pairwise relative L2 (first argument = 'prediction', second = reference):
+  grid=201x2001  pred=exact  ref=paper  L2=0.000438607  L2_late=0.00140461  max_abs_over_A0=0.000231948  rel_freq_diff=1.72413e-05  target=0.000464  floor_over_target=0.945274
+  grid=201x2001  pred=material  ref=paper  L2=0.0013568  L2_late=0.00434826  max_abs_over_A0=0.000717841  rel_freq_diff=-5.28031e-05  target=0.000464  floor_over_target=2.92415
+  grid=201x2001  pred=material  ref=exact  L2=0.00179215  L2_late=0.00574392  max_abs_over_A0=0.00094815  rel_freq_diff=-7.00432e-05  target=0.000464  floor_over_target=3.86238
+  grid=101x1001  pred=exact  ref=paper  L2=0.000437842  L2_late=0.00140603  max_abs_over_A0=0.000231613  rel_freq_diff=1.72413e-05  target=0.000464  floor_over_target=0.943625
+  grid=101x1001  pred=material  ref=paper  L2=0.00135443  L2_late=0.00435277  max_abs_over_A0=0.000716411  rel_freq_diff=-5.28031e-05  target=0.000464  floor_over_target=2.91903
+  grid=101x1001  pred=material  ref=exact  L2=0.00178901  L2_late=0.00574986  max_abs_over_A0=0.000947881  rel_freq_diff=-7.00432e-05  target=0.000464  floor_over_target=3.85562
+  grid=401x4001  pred=exact  ref=paper  L2=0.000438991  L2_late=0.00140391  max_abs_over_A0=0.000231948  rel_freq_diff=1.72413e-05  target=0.000464  floor_over_target=0.946102
+  grid=401x4001  pred=material  ref=paper  L2=0.001358  L2_late=0.00434604  max_abs_over_A0=0.000717841  rel_freq_diff=-5.28031e-05  target=0.000464  floor_over_target=2.92672
+  grid=401x4001  pred=material  ref=exact  L2=0.00179372  L2_late=0.005741  max_abs_over_A0=0.000948512  rel_freq_diff=-7.00432e-05  target=0.000464  floor_over_target=3.86578
+
+IC mode-shape difference paper vs exact: max 2.104e-05 A0, rel-L2 1.734e-05
+Paper reference slope-BC violation at x=L: |u_x| L / A0 = 2.427e-04
+  grid=1-D x (20001)  pred=paper_u0  ref=exact_u0  L2=1.73391e-05  L2_late=nan  max_abs_over_A0=2.10356e-05  rel_freq_diff=0  target=0.000464  floor_over_target=nan
+
+Floor decomposition on 201x2001: total 4.3861e-04 | frequency part 4.3826e-04 | shape part 1.7339e-05
+  grid=201x2001  pred=exact  ref=paper(freq only)  L2=0.000438265  L2_late=nan  max_abs_over_A0=nan  rel_freq_diff=-1.7241e-05  target=0.000464  floor_over_target=0.944536
+  grid=201x2001  pred=exact  ref=paper(shape only)  L2=1.7339e-05  L2_late=nan  max_abs_over_A0=nan  rel_freq_diff=0  target=0.000464  floor_over_target=0.0373685
+
+Headroom for L2_paper < 0.000464 (floor 4.3861e-04 = 94.5% of target):
+  guaranteed if L2_exact < 2.539e-05  (triangle inequality, worst case)
+  if the PINN error is orthogonal to the reference discrepancy: L2_exact < 1.514e-04
+  grid=201x2001  pred=headroom  ref=paper  L2=0.000438607  L2_late=nan  max_abs_over_A0=nan  rel_freq_diff=nan  target=0.000464  floor_over_target=0.945274  worst_case_L2_exact_needed=2.53929e-05  orthogonal_L2_exact_needed=0.000151393
+
+wrote /home/user/PINN-replication/results_optimization/tables/stage01_reference_comparison.csv

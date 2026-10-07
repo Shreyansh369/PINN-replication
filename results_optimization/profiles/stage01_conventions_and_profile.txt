@@ -1,0 +1,23 @@
+Targets: temporal wd = 129.32 rad/s; spatial beta1 = 1.7200 rad/m
+  paper (Eq.38-39: 2pi, physical)        t sigma= 10.0: max   168.37  median   40.50  >=target   3/100  within10%   5
+  paper (Eq.38-39: 2pi, physical)        t sigma=  1.0: max    17.39  median    4.71  >=target   0/100  within10%   0
+  paper (Eq.38-39: 2pi, physical)        x sigma=  1.0: max    16.80  median    4.47  >=target  78/100  within10%   3
+  reference code (no 2pi, standardised)  t sigma= 10.0: max    92.83  median   22.33  >=target   0/100  within10%   0
+  reference code (no 2pi, standardised)  t sigma=  1.0: max     9.59  median    2.60  >=target   0/100  within10%   0
+  reference code (no 2pi, standardised)  x sigma=  1.0: max     3.37  median    0.90  >=target  19/100  within10%   9
+  legacy repo (no 2pi, unit)             t sigma= 10.0: max    26.80  median    6.45  >=target   0/100  within10%   0
+  legacy repo (no 2pi, unit)             t sigma=  1.0: max     2.77  median    0.75  >=target   0/100  within10%   0
+  legacy repo (no 2pi, unit)             x sigma=  1.0: max     0.97  median    0.26  >=target   0/100  within10%   0
+wrote /home/user/PINN-replication/results_optimization/tables/stage01_fourier_support_FE-D-M1.csv
+
+Cost per step of the new pipeline (fwd+bwd of all 4 terms, NO optimizer step):
+  6x200  P=241,601 mb=  32: step    71.5 ms | NTK update vectorised      674 ms, loop     1094 ms (128 rows) | NTK overhead @every100   9.4%
+  6x200  P=241,601 mb= 128: step   130.4 ms | NTK update vectorised     6757 ms, loop     8790 ms (512 rows) | NTK overhead @every100  51.8%
+  6x200  P=241,601 mb= 640: step   323.4 ms | NTK update vectorised   133880 ms, loop    95538 ms (2560 rows) | NTK overhead @every100 414.0%
+  4x200  P=161,201 mb=  32: step    39.2 ms | NTK update vectorised      277 ms, loop      858 ms (128 rows) | NTK overhead @every100   7.1%
+  4x200  P=161,201 mb= 128: step    89.8 ms | NTK update vectorised     3147 ms, loop     5725 ms (512 rows) | NTK overhead @every100  35.0%
+  4x200  P=161,201 mb= 640: step   199.1 ms | NTK update vectorised    92489 ms, loop    64970 ms (2560 rows) | NTK overhead @every100 464.5%
+  3x64   P= 21,313 mb=  32: step    27.2 ms | NTK update vectorised       84 ms, loop      344 ms (128 rows) | NTK overhead @every100   3.1%
+  3x64   P= 21,313 mb= 128: step    36.7 ms | NTK update vectorised      643 ms, loop     2115 ms (512 rows) | NTK overhead @every100  17.5%
+  3x64   P= 21,313 mb= 640: step    80.1 ms | NTK update vectorised    15987 ms, loop    22136 ms (2560 rows) | NTK overhead @every100 199.5%
+wrote /home/user/PINN-replication/results_optimization/profiles/stage01_step_profile.csv

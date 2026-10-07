@@ -1,0 +1,14 @@
+threads=4  torch=2.14.0+cu130
+A. existing per-point nested-autograd loss, fwd+bwd [ms/step]; N_ic=N_bc=N_pde=N
+   3x64 m= 64 P= 16,705 | N=32:    17.6  N=128:    25.1  N=640:    58.9 | one NTK update (16 rows x5 terms):     207 ms
+   4x200 m= 64 P=146,801 | N=32:    33.0  N=128:    74.7  N=640:   183.2 | one NTK update (16 rows x5 terms):     930 ms
+   4x200 m=100 P=161,201 | N=32:    55.4  N=128:    88.9  N=640:   214.2 | one NTK update (16 rows x5 terms):     697 ms
+   6x200 m=100 P=241,601 | N=32:    59.8  N=128:   106.4  N=640:   253.7 | one NTK update (16 rows x5 terms):    1191 ms
+
+B. separable exact derivatives: u = head([h_x(x)*h_t1(t), h_x(x)*h_t2(t)])
+   => u_xxxx needs only d^4 h_x/dx^4 (1-D input, forward mode); u_tt only d^2 h_t/dt^2
+   4x200 m=64 N=  32: nested-autograd PDE fwd+bwd    37.8 ms | separable fwd-mode   122.6 ms | speedup 0.31x | max rel diff 9.1e-07
+   4x200 m=64 N= 640: nested-autograd PDE fwd+bwd   162.0 ms | separable fwd-mode   341.2 ms | speedup 0.47x | max rel diff 1.1e-06
+   6x200 m=100 N=  32: nested-autograd PDE fwd+bwd    48.0 ms | separable fwd-mode   201.2 ms | speedup 0.24x | max rel diff 6.1e-07
+   6x200 m=100 N= 640: nested-autograd PDE fwd+bwd   252.1 ms | separable fwd-mode   585.6 ms | speedup 0.43x | max rel diff 9.9e-07
+Model name:                              Intel(R) Xeon(R) Processor @ 2.10GHz
